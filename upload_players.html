@@ -55,9 +55,9 @@
     <div id="log"></div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
+  <!-- ✅ Firebase v9 compat SDKs (works with firebase.initializeApp syntax) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script>
@@ -73,9 +73,9 @@
       measurementId: "G-WT75JLVR2E"
     };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database(app);
+    // ✅ Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     const uploadBtn = document.getElementById("uploadBtn");
     const fileInput = document.getElementById("fileInput");
@@ -87,6 +87,7 @@
         alert("Please select an Excel file first!");
         return;
       }
+
       log.innerHTML = "<p>Reading file...</p>";
 
       const reader = new FileReader();
@@ -110,7 +111,7 @@
               basePrice: player["Base Price"] || 0,
               currentBid: 0,
               team: "",
-              status: "available",
+              status: "available"
             })
             .then(() => {
               log.innerHTML += `<p>✅ Uploaded: ${player["Name"] || empId}</p>`;
