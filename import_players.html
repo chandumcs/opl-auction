@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Import Players to Firebase</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body style="font-family:Arial;padding:20px">
+  <h2>Upload Excel to import players</h2>
+  <input type="file" id="fileInput" accept=".xls,.xlsx" />
+  <button id="uploadBtn">Upload to Firebase</button>
+  <pre id="log" style="background:#f5f5f5;padding:10px;margin-top:20px;height:300px;overflow:auto"></pre>
+
+  <script>
+    /* --- YOUR FIREBASE CONFIG HERE --- */
+    const firebaseConfig = {
+      apiKey: "PASTE_YOUR_API_KEY",
+      authDomain: "PASTE_YOUR_AUTH_DOMAIN",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const log = msg => {
+      document.getElementById("log").textContent += msg + "\n";
+    };
+
+    document.getElementById("uploadBtn").onclick = () => {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return alert("Select an Excel file first.");
+      const reader = new FileReader();
+      reader.onload = e => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+        log("Total rows: " + rows.length);
+        rows.forEach(row => {
+          const emp = (row["Employee ID"] || row["EMP ID"] || row["ID"] || "").toString().trim();
+          if (!emp) return;
+          const playerData = {
+            employeeId: emp,
+            name: row["Name"] || row["Player Name"] || "",
+            type: row["Type"] || row["Player Type"] || "",
+            department: row["Department"] || "",
+            basePrice: Number(row["Base Price"] || 0),
+            currentBid: Number(row["Base Price"] || 0),
+            status: "available"
+          };
+          db.ref("players/" + emp).set(playerData);
+          log("Uploaded: " + emp + " — " + playerData.name);
+        });
+        log("\n✅ Upload complete!");
+      };
+      reader.readAsArrayBuffer(file);
+    };
+  </script>
+</body>
+</html>
