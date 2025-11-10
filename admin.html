@@ -80,7 +80,7 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     }
     .sold { border-bottom: 1px solid #ddd; padding: 6px 0; }
-    #customAmount { width: 100px; text-align: center; }
+    #customAmount { width: 120px; text-align: center; }
   </style>
 </head>
 <body>
@@ -105,7 +105,8 @@
     <div>
       <button onclick="increaseBid(20000)">+ ₹20K</button>
       <button onclick="increaseBid(50000)">+ ₹50K</button>
-      <input type="number" id="customAmount" placeholder="Custom ₹" min="1" onkeypress="return event.charCode>=48 && event.charCode<=57">
+      <input type="number" id="customAmount" placeholder="Custom ₹" min="1" 
+        onkeypress="return event.charCode>=48 && event.charCode<=57">
       <button onclick="addCustomBid()">Add Custom Bid</button>
       <button style="background:green" onclick="markSold()">Mark Sold</button>
     </div>
@@ -130,14 +131,15 @@
       <option value="Ravi Raj">Ravi Raj</option>
       <option value="Mahinder">Mahinder</option>
     </select>
-    <button onclick="exportSoldPlayers()">📤 Export Sold Players</button>
+    <button onclick="exportSoldPlayers()">📤 Export Filtered</button>
+    <button onclick="exportAllOwners()">📘 Export All Owners</button>
   </div>
 
   <footer style="background:#002b5c;color:white;padding:10px;font-size:14px;">
     © 2025 Olive Crypto Systems Pvt. Ltd. — OPL 2025 Admin Control
   </footer>
 
-  <!-- Firebase and Excel -->
+  <!-- Firebase + XLSX -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -154,8 +156,13 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     const Cr = 10000000;
+
+    const ownersList = [
+      "Sharath", "Sarath Chava", "Teja", "Vamsi",
+      "Rajan", "Shabeer", "Ravi Raj", "Mahinder"
+    ];
+
     const initialOwners = {
       "Sharath": { captain: "Kalyan", walletCr: 64.5 },
       "Sarath Chava": { captain: "Sai", walletCr: 77 },
@@ -197,7 +204,8 @@
       Object.keys(initialOwners).forEach(name => {
         const d = document.createElement('div');
         d.className = 'ownerCard';
-        d.innerHTML = `<div>${name}</div><div>${initialOwners[name].captain}</div><div class="wallet" id="wallet_${name}">Loading...</div>`;
+        d.innerHTML = `<div>${name}</div><div>${initialOwners[name].captain}</div>
+                       <div class="wallet" id="wallet_${name}">Loading...</div>`;
         d.onclick = () => selectBidder(name);
         grid.appendChild(d);
       });
@@ -205,7 +213,8 @@
         const obj = s.val() || {};
         Object.keys(obj).forEach(k => {
           const el = document.getElementById('wallet_' + k);
-          if (el) el.innerText = '₹' + Number(obj[k].wallet || 0).toLocaleString() + ' (' + ((Number(obj[k].wallet||0)/Cr).toFixed(2)) + 'Cr)';
+          if (el) el.innerText = '₹' + Number(obj[k].wallet || 0).toLocaleString() +
+            ' (' + ((Number(obj[k].wallet||0)/Cr).toFixed(2)) + 'Cr)';
         });
       });
     }
@@ -221,7 +230,7 @@
       document.getElementById('basePrice').innerText = p.basePrice || 0;
       currentBid = Number(p.currentBid || 0);
       updateBid();
-      db.ref('live').set({ currentPlayerKey: key, currentBid: currentBid, currentBidder: currentBidder || null });
+      db.ref('live').set({ currentPlayerKey: key, currentBid, currentBidder: currentBidder || null });
     }
 
     function selectBidder(name) {
@@ -302,6 +311,36 @@
       XLSX.utils.book_append_sheet(wb, ws, "Sold Players");
       const fileName = ownerFilter === "All" ? "All_Sold_Players.xlsx" : ownerFilter + "_Sold_Players.xlsx";
       XLSX.writeFile(wb, fileName);
+    }
+
+    async function exportAllOwners() {
+      const snap = await db.ref('soldPlayers').once('value');
+      if (!snap.exists()) return alert('No sold players found!');
+      const allData = Object.values(snap.val());
+      const wb = XLSX.utils.book_new();
+
+      ownersList.forEach(owner => {
+        const players = allData.filter(p => p.team === owner);
+        if (players.length > 0) {
+          const sheetData = players.map(p => ({
+            PlayerName: p.name || "",
+            Type: p.type || "",
+            Category: p.category || "",
+            BasePrice: p.basePrice || "",
+            SoldPrice: p.currentBid || 0,
+            TeamOwner: p.team || "",
+            Status: p.status || ""
+          }));
+          const ws = XLSX.utils.json_to_sheet(sheetData);
+
+          const totalSpent = players.reduce((sum, p) => sum + (p.currentBid || 0), 0);
+          XLSX.utils.sheet_add_json(ws, [{ PlayerName: "", Type: "", Category: "", BasePrice: "", SoldPrice: totalSpent, TeamOwner: "TOTAL", Status: "" }], { origin: -1, skipHeader: true });
+
+          XLSX.utils.book_append_sheet(wb, ws, owner);
+        }
+      });
+      XLSX.writeFile(wb, "OPL_SoldPlayers_AllOwners.xlsx");
+      alert("✅ Exported all owners' sold players successfully!");
     }
 
     initOwners();
