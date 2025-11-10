@@ -1,161 +1,245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OPL 2025 — Admin Control Panel</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
-    body { font-family:"Segoe UI",Arial; background:#f5f8fc; margin:0; }
-    header { background:#002B5B; color:white; padding:16px 20px; display:flex; align-items:center; gap:10px; }
-    header img { height:40px; }
-    .main { max-width:800px; margin:40px auto; background:white; padding:25px; border-radius:12px; box-shadow:0 3px 15px rgba(0,0,0,0.1); text-align:center; }
-    h2 { color:#002B5B; margin-bottom:10px; }
-    .price { font-size:50px; font-weight:bold; color:#FF6600; margin:20px 0; }
-    .info { font-size:17px; margin:5px 0; color:#333; }
-    input { padding:10px; font-size:16px; border-radius:6px; border:1px solid #ccc; width:60%; margin-top:10px; }
-    button { padding:10px 18px; border:none; border-radius:6px; font-size:15px; cursor:pointer; margin:5px; }
-    button.inc { background:#eee; }
-    button.sell { background:#22c55e; color:white; }
-    .owner-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:20px 0; }
-    .owner-btn { background:#004a99; color:white; padding:10px; border:none; border-radius:6px; cursor:pointer; transition:0.2s; }
-    .owner-btn:hover { background:#0066cc; transform:scale(1.05); }
-    .active-owner { background:#FF6600 !important; }
-    footer { background:#002B5B; color:white; text-align:center; padding:12px; margin-top:40px; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f8ff;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #002b5c;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+    }
+    header img {
+      height: 40px;
+      margin-right: 10px;
+    }
+    header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .card {
+      background: white;
+      width: 80%;
+      margin: 30px auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .amount {
+      font-size: 45px;
+      color: orange;
+      font-weight: bold;
+    }
+    .owner-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin: 25px auto;
+      width: 80%;
+    }
+    .owner {
+      background: #002b5c;
+      color: white;
+      border-radius: 8px;
+      padding: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .owner:hover {
+      background: #004080;
+    }
+    .owner small {
+      display: block;
+      color: #ffb74d;
+      font-size: 13px;
+    }
+    button {
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .bid-btn {
+      background: #eee;
+    }
+    .bid-btn:hover {
+      background: #ccc;
+    }
+    .mark-sold {
+      background: #00a651;
+      color: white;
+    }
+    footer {
+      background: #002b5c;
+      color: white;
+      padding: 10px;
+      font-size: 14px;
+      position: fixed;
+      width: 100%;
+      bottom: 0;
+    }
   </style>
 </head>
 <body>
   <header>
     <img src="assets/logo.png" alt="Olive Logo">
-    <h1>OPL 2025 — Admin Control Panel</h1>
+    <h2>OPL 2025 — Admin Control Panel</h2>
   </header>
 
-  <div class="main">
-    <h2 id="p_name">Select Player to Start Auction</h2>
-    <div class="info" id="p_id">Employee ID: ---</div>
-    <div class="info" id="p_type">Type: ---</div>
-    <div class="info" id="p_base">Base Price: ₹0</div>
-    <div class="price" id="p_bid">₹0</div>
-    <div class="info" id="p_bidder">Bidder: ---</div>
+  <div class="card">
+    <h2>Select Player to Start Auction</h2>
+    <p>Employee ID: <span id="empId">---</span></p>
+    <p>Name: <span id="playerName">---</span></p>
+    <p>Type: <span id="playerType">---</span></p>
+    <p>Class: <span id="playerClass">---</span></p>
+    <p>Location: <span id="playerLocation">---</span></p>
+    <p>Base Price: ₹<span id="basePrice">0</span></p>
+    <div class="amount" id="currentBid">₹0</div>
+    <p>Bidder: <span id="currentBidder">---</span></p>
 
-    <input type="text" id="searchBox" placeholder="Enter Employee ID or Name">
+    <input type="text" id="searchInput" placeholder="Enter Employee ID" />
     <button onclick="searchPlayer()">Search Player</button>
 
-    <div class="owner-grid">
-      <button class="owner-btn" onclick="setOwner('SHARATH','KALAYAN')">Sharath<br><small>Kalyan</small></button>
-      <button class="owner-btn" onclick="setOwner('TEJA','SHASHANK')">Teja<br><small>Shashank</small></button>
-      <button class="owner-btn" onclick="setOwner('RAJAN','VAMSI')">Rajan<br><small>Vamsi</small></button>
-      <button class="owner-btn" onclick="setOwner('SHABEER','VIJAYANDER')">Shabeer<br><small>Vijayander</small></button>
-      <button class="owner-btn" onclick="setOwner('SARATH CHAVA','SAI')">Sarath<br><small>Sai</small></button>
-      <button class="owner-btn" onclick="setOwner('MAHINDER','SAI VARMA')">Mahinder<br><small>Sai Varma</small></button>
-      <button class="owner-btn" onclick="setOwner('VAMSI','SURENDER')">Vamsi<br><small>Surender</small></button>
-      <button class="owner-btn" onclick="setOwner('RAVI RAJ','SURESH')">Ravi Raj<br><small>Suresh</small></button>
+    <div class="owner-grid" id="ownerGrid">
+      <!-- Owner buttons will load here -->
     </div>
 
     <div>
-      <button class="inc" onclick="increaseBid(100000)">+1 Lakh</button>
-      <button class="inc" onclick="increaseBid(500000)">+5 Lakh</button>
-      <button class="inc" onclick="increaseBid(1000000)">+10 Lakh</button>
-      <button class="inc" onclick="increaseBid(2500000)">+25 Lakh</button>
-      <button class="inc" onclick="increaseBid(5000000)">+50 Lakh</button>
-      <button class="inc" onclick="increaseBid(10000000)">+1 Crore</button>
+      <button class="bid-btn" onclick="increaseBid(100000)">+1 Lakh</button>
+      <button class="bid-btn" onclick="increaseBid(500000)">+5 Lakh</button>
+      <button class="bid-btn" onclick="increaseBid(1000000)">+10 Lakh</button>
+      <button class="bid-btn" onclick="increaseBid(2500000)">+25 Lakh</button>
+      <button class="bid-btn" onclick="increaseBid(5000000)">+50 Lakh</button>
+      <button class="bid-btn" onclick="increaseBid(10000000)">+1 Crore</button>
     </div>
 
-    <button class="sell" onclick="markSold()">Mark Sold</button>
+    <button class="mark-sold" onclick="markSold()">Mark Sold</button>
   </div>
 
   <footer>© 2025 Olive Crypto Systems Pvt. Ltd. — OPL 2025 Admin Control</footer>
 
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <script>
     const firebaseConfig = {
-      apiKey: "PASTE_API_KEY",
-      authDomain: "PASTE_AUTH_DOMAIN",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "SENDER_ID",
-      appId: "APP_ID"
+      apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+      authDomain: "opl-2025-season-2.firebaseapp.com",
+      databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "opl-2025-season-2",
+      storageBucket: "opl-2025-season-2.firebasestorage.app",
+      messagingSenderId: "282929654033",
+      appId: "1:282929654033:web:535ab2b78937cdfa2b04b0",
+      measurementId: "G-WT75JLVR2E"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Owner-captain list
+    const owners = [
+      { owner: "Sharath", captain: "Kalyan" },
+      { owner: "Teja", captain: "Shashank" },
+      { owner: "Rajan", captain: "Vamsi" },
+      { owner: "Shabeer", captain: "Vijayander" },
+      { owner: "Sarath Chava", captain: "Sai" },
+      { owner: "Mahinder", captain: "Sai Varma" },
+      { owner: "Vamsi", captain: "Surender" },
+      { owner: "Ravi Raj", captain: "Suresh" }
+    ];
+
     let currentPlayer = null;
     let currentBid = 0;
-    let currentOwner = null;
-    let currentCaptain = null;
+    let currentBidder = null;
 
-    function searchPlayer() {
-      const searchVal = document.getElementById('searchBox').value.trim().toLowerCase();
-      if (!searchVal) return alert("Enter a player name or ID");
-
-      db.ref("players").once("value", snap => {
-        const data = snap.val() || {};
-        let found = null;
-        Object.values(data).forEach(p => {
-          if (p.employeeId?.toLowerCase() === searchVal || p.name?.toLowerCase() === searchVal) {
-            found = p;
-          }
-        });
-        if (found) {
-          currentPlayer = found;
-          currentBid = found.basePrice || 0;
-          updateUI();
-          db.ref("currentAuction").set(found);
-        } else {
-          alert("Player not found!");
-        }
+    // Load owner buttons
+    function loadOwners() {
+      const grid = document.getElementById("ownerGrid");
+      owners.forEach(o => {
+        const div = document.createElement("div");
+        div.classList.add("owner");
+        div.innerHTML = `${o.owner}<small>${o.captain}</small>`;
+        div.onclick = () => selectBidder(o.owner);
+        grid.appendChild(div);
       });
     }
 
-    function updateUI() {
-      document.getElementById('p_name').textContent = currentPlayer.name || '---';
-      document.getElementById('p_id').textContent = "Employee ID: " + (currentPlayer.employeeId || '---');
-      document.getElementById('p_type').textContent = "Type: " + (currentPlayer.type || '---');
-      document.getElementById('p_base').textContent = "Base Price: ₹" + (currentPlayer.basePrice || 0).toLocaleString();
-      document.getElementById('p_bid').textContent = "₹" + currentBid.toLocaleString();
+    function selectBidder(name) {
+      currentBidder = name;
+      document.getElementById("currentBidder").innerText = name;
     }
 
-    function setOwner(owner, captain) {
-      currentOwner = owner;
-      currentCaptain = captain;
-      document.querySelectorAll(".owner-btn").forEach(btn => btn.classList.remove("active-owner"));
-      event.target.classList.add("active-owner");
-      document.getElementById('p_bidder').textContent = "Bidder: " + owner;
+    async function searchPlayer() {
+      const empId = document.getElementById('searchInput').value.trim();
+      if (!empId) return alert("Please enter Employee ID");
+
+      const playerRef = db.ref('players/' + empId);
+      const snapshot = await playerRef.get();
+
+      if (snapshot.exists()) {
+        currentPlayer = empId;
+        const player = snapshot.val();
+        document.getElementById("empId").innerText = empId;
+        document.getElementById("playerName").innerText = player.name || "---";
+        document.getElementById("playerType").innerText = player.type || "---";
+        document.getElementById("playerClass").innerText = player.class || "---";
+        document.getElementById("playerLocation").innerText = player.location || "---";
+        document.getElementById("basePrice").innerText = player.basePrice || 0;
+        currentBid = player.currentBid || 0;
+        document.getElementById("currentBid").innerText = "₹" + currentBid;
+        document.getElementById("currentBidder").innerText = player.team || "---";
+      } else {
+        alert("❌ No player found with this ID");
+      }
     }
 
     function increaseBid(amount) {
       if (!currentPlayer) return alert("Search a player first!");
-      if (!currentOwner) return alert("Select an owner first!");
+      if (!currentBidder) return alert("Select an owner before bidding!");
       currentBid += amount;
-      document.getElementById("p_bid").textContent = "₹" + currentBid.toLocaleString();
-      document.getElementById("p_bidder").textContent = "Bidder: " + currentOwner;
-
-      db.ref("currentAuction").update({
-        currentBid: currentBid,
-        currentBidder: currentOwner,
-        captain: currentCaptain
-      });
+      document.getElementById("currentBid").innerText = "₹" + currentBid.toLocaleString();
     }
 
     function markSold() {
-      if (!currentPlayer || !currentOwner) return alert("Select player and owner first!");
-
-      const soldData = {
-        ...currentPlayer,
-        status: "sold",
+      if (!currentPlayer || !currentBidder) return alert("Search player and select bidder!");
+      db.ref('players/' + currentPlayer).update({
         currentBid: currentBid,
-        soldPrice: currentBid,
-        currentBidder: currentOwner,
-        ownerName: currentOwner,
-        captain: currentCaptain,
-        teamName: "Team " + currentOwner
-      };
-
-      db.ref("players/" + currentPlayer.employeeId).set(soldData);
-      db.ref("currentAuction").set(soldData);
-      alert(`✅ ${currentPlayer.name} SOLD to ${currentOwner} for ₹${currentBid.toLocaleString()}`);
+        team: currentBidder,
+        status: "sold"
+      }).then(() => {
+        alert("✅ Player marked as SOLD!");
+        resetUI();
+      });
     }
+
+    function resetUI() {
+      currentPlayer = null;
+      currentBidder = null;
+      currentBid = 0;
+      document.getElementById("empId").innerText = "---";
+      document.getElementById("playerName").innerText = "---";
+      document.getElementById("playerType").innerText = "---";
+      document.getElementById("playerClass").innerText = "---";
+      document.getElementById("playerLocation").innerText = "---";
+      document.getElementById("basePrice").innerText = "0";
+      document.getElementById("currentBid").innerText = "₹0";
+      document.getElementById("currentBidder").innerText = "---";
+    }
+
+    loadOwners();
   </script>
 </body>
 </html>
