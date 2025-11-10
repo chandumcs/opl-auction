@@ -1,127 +1,113 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Olive Premier League — Live Auction</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Olive Premier League 2025 — Live Auction</title>
+
+  <!-- Link CSS -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
+
 <body>
+  <!-- HEADER -->
   <header class="topbar">
-    <img src="assets/logo.png" alt="Olive" class="logo">
-    <h1>Olive Premier League — Live Auction</h1>
+    <div style="display:flex;align-items:center;">
+      <img src="assets/logo.png" alt="Olive" class="logo" />
+      <h1>Olive Premier League 2025 — Live Auction 
+        <span class="live-badge">LIVE</span>
+      </h1>
+    </div>
     <div id="clock" class="clock"></div>
   </header>
 
-  <main>
-    <section id="current" class="current-player">
-      <!-- Live highlighted player appears here -->
-    </section>
+  <!-- CURRENT PLAYER SECTION -->
+  <section class="current-player">
+    <div class="current-card">
+      <h2 id="current-player-name">Loading player...</h2>
+      <p>Employee ID: <span id="current-player-id">---</span></p>
+      <div class="big-price">₹<span id="current-player-bid">0</span></div>
+      <p>Bidder: <strong id="current-player-bidder">---</strong></p>
+    </div>
+  </section>
 
-    <section class="grid" id="playersGrid">
-      <!-- Player cards injected here -->
-    </section>
-  </main>
+  <!-- ALL PLAYERS GRID -->
+  <section class="grid" id="players-grid">
+    <!-- Player cards will appear here -->
+  </section>
 
-  <footer class="footer">Olive Crypto Systems — Live Auction</footer>
+  <!-- FOOTER -->
+  <footer class="footer">
+    © 2025 Olive Crypto Systems Pvt. Ltd. — Olive Premier League Live Auction
+  </footer>
 
+  <!-- Firebase Config -->
   <script>
-  // --- CONFIG: paste your firebaseConfig here ---
-  const firebaseConfig = {
-    apiKey: "PASTE_API_KEY",
-    authDomain: "PASTE_AUTH_DOMAIN",
-    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "SENDER_ID",
-    appId: "APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  // live UI logic
-  const grid = document.getElementById('playersGrid');
-  const current = document.getElementById('current');
-
-  function createCard(id, data) {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.id = id;
-    div.innerHTML = `
-      <div class="card-header">
-        <div class="player-name">${data.name}</div>
-        <div class="player-id">${data.employeeId}</div>
-      </div>
-      <div class="card-body">
-        <div class="prices">
-          <div>Base: <strong>₹${data.basePrice}</strong></div>
-          <div>Current: <strong class="current-bid">₹${data.currentBid}</strong></div>
-        </div>
-        <div class="owner">Owner: <span class="owner-name">${data.currentBidder || '-'}</span></div>
-      </div>
-      <div class="status ${data.status}">${data.status.toUpperCase()}</div>
-    `;
-    return div;
-  }
-
-  // render initial list and listen for changes
-  db.ref('players').on('value', snap => {
-    grid.innerHTML = '';
-    const players = snap.val() || {};
-    Object.keys(players).forEach(k => {
-      const card = createCard(k, players[k]);
-      grid.appendChild(card);
-    });
-  });
-
-  // listen for child changes to animate updates
-  db.ref('players').on('child_changed', snapshot => {
-    const id = snapshot.key;
-    const data = snapshot.val();
-    const card = document.getElementById(id);
-    if (card) {
-      // update values
-      card.querySelector('.current-bid').textContent = '₹' + data.currentBid;
-      card.querySelector('.owner-name').textContent = data.currentBidder || '-';
-      // animate
-      card.classList.add('pulse');
-      setTimeout(()=> card.classList.remove('pulse'), 900);
-      // status update
-      const statusEl = card.querySelector('.status');
-      statusEl.textContent = data.status.toUpperCase();
-      statusEl.className = 'status ' + data.status;
-    }
-  });
-
-  // highlight current active player
-  db.ref('auction/currentPlayerId').on('value', s => {
-    const pid = s.val();
-    if (!pid) { current.innerHTML = ''; return; }
-    db.ref('players/' + pid).once('value').then(snap => {
-      const data = snap.val();
-      if (!data) return;
-      current.innerHTML = `
-        <div class="current-card">
-          <h2>Now Auctioning</h2>
-          <div class="player-name">${data.name} — ${data.employeeId}</div>
-          <div class="big-price">₹${data.currentBid}</div>
-          <div class="owner">Owner: ${data.currentBidder || '-'}</div>
-        </div>
-      `;
-      // flash
-      const el = current.querySelector('.current-card');
-      el.classList.add('flash');
-      setTimeout(()=> el.classList.remove('flash'), 1000);
-    });
-  });
-
-  // small clock
-  setInterval(()=> {
-    document.getElementById('clock').textContent = new Date().toLocaleTimeString();
-  },1000);
+    const firebaseConfig = {
+      apiKey: "AIzaSyDw6bKsn...EsIxY",
+      authDomain: "opl-2025-season-2.firebaseapp.com",
+      databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "opl-2025-season-2",
+      storageBucket: "opl-2025-season-2.appspot.com",
+      messagingSenderId: "282929654033",
+      appId: "1:282929654033:web:8c51d8414ef45f442b04b0",
+      measurementId: "G-20BWK7G44S"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
   </script>
+
+  <!-- LIVE AUCTION SCRIPT -->
+  <script>
+    const playersGrid = document.getElementById('players-grid');
+    const currentName = document.getElementById('current-player-name');
+    const currentId = document.getElementById('current-player-id');
+    const currentBid = document.getElementById('current-player-bid');
+    const currentBidder = document.getElementById('current-player-bidder');
+
+    // Load all players in grid
+    db.ref('players').on('value', snapshot => {
+      const players = snapshot.val();
+      playersGrid.innerHTML = '';
+
+      for (let id in players) {
+        const p = players[id];
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="player-name">${p.name}</div>
+          <div class="prices">
+            <span>Base ₹${p.basePrice}</span>
+            <span>Bid ₹${p.currentBid}</span>
+          </div>
+          <div class="status ${p.status}">${p.status.toUpperCase()}</div>
+        `;
+        playersGrid.appendChild(card);
+      }
+    });
+
+    // Listen for current auction player updates
+    db.ref('currentAuction').on('value', snapshot => {
+      const cur = snapshot.val();
+      if (cur) {
+        currentName.textContent = cur.name || "—";
+        currentId.textContent = cur.employeeId || "—";
+        currentBid.textContent = cur.currentBid || "0";
+        currentBidder.textContent = cur.currentBidder || "—";
+      }
+    });
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+  </script>
+
 </body>
 </html>
