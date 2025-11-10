@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Olive Premier League — Live Auction</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <img src="assets/logo.png" alt="Olive" class="logo">
+    <h1>Olive Premier League — Live Auction</h1>
+    <div id="clock" class="clock"></div>
+  </header>
+
+  <main>
+    <section id="current" class="current-player">
+      <!-- Live highlighted player appears here -->
+    </section>
+
+    <section class="grid" id="playersGrid">
+      <!-- Player cards injected here -->
+    </section>
+  </main>
+
+  <footer class="footer">Olive Crypto Systems — Live Auction</footer>
+
+  <script>
+  // --- CONFIG: paste your firebaseConfig here ---
+  const firebaseConfig = {
+    apiKey: "PASTE_API_KEY",
+    authDomain: "PASTE_AUTH_DOMAIN",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // live UI logic
+  const grid = document.getElementById('playersGrid');
+  const current = document.getElementById('current');
+
+  function createCard(id, data) {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.id = id;
+    div.innerHTML = `
+      <div class="card-header">
+        <div class="player-name">${data.name}</div>
+        <div class="player-id">${data.employeeId}</div>
+      </div>
+      <div class="card-body">
+        <div class="prices">
+          <div>Base: <strong>₹${data.basePrice}</strong></div>
+          <div>Current: <strong class="current-bid">₹${data.currentBid}</strong></div>
+        </div>
+        <div class="owner">Owner: <span class="owner-name">${data.currentBidder || '-'}</span></div>
+      </div>
+      <div class="status ${data.status}">${data.status.toUpperCase()}</div>
+    `;
+    return div;
+  }
+
+  // render initial list and listen for changes
+  db.ref('players').on('value', snap => {
+    grid.innerHTML = '';
+    const players = snap.val() || {};
+    Object.keys(players).forEach(k => {
+      const card = createCard(k, players[k]);
+      grid.appendChild(card);
+    });
+  });
+
+  // listen for child changes to animate updates
+  db.ref('players').on('child_changed', snapshot => {
+    const id = snapshot.key;
+    const data = snapshot.val();
+    const card = document.getElementById(id);
+    if (card) {
+      // update values
+      card.querySelector('.current-bid').textContent = '₹' + data.currentBid;
+      card.querySelector('.owner-name').textContent = data.currentBidder || '-';
+      // animate
+      card.classList.add('pulse');
+      setTimeout(()=> card.classList.remove('pulse'), 900);
+      // status update
+      const statusEl = card.querySelector('.status');
+      statusEl.textContent = data.status.toUpperCase();
+      statusEl.className = 'status ' + data.status;
+    }
+  });
+
+  // highlight current active player
+  db.ref('auction/currentPlayerId').on('value', s => {
+    const pid = s.val();
+    if (!pid) { current.innerHTML = ''; return; }
+    db.ref('players/' + pid).once('value').then(snap => {
+      const data = snap.val();
+      if (!data) return;
+      current.innerHTML = `
+        <div class="current-card">
+          <h2>Now Auctioning</h2>
+          <div class="player-name">${data.name} — ${data.employeeId}</div>
+          <div class="big-price">₹${data.currentBid}</div>
+          <div class="owner">Owner: ${data.currentBidder || '-'}</div>
+        </div>
+      `;
+      // flash
+      const el = current.querySelector('.current-card');
+      el.classList.add('flash');
+      setTimeout(()=> el.classList.remove('flash'), 1000);
+    });
+  });
+
+  // small clock
+  setInterval(()=> {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+  },1000);
+  </script>
+</body>
+</html>
