@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OPL 2025 — Live Auction</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <style>
+    body { font-family:"Segoe UI",Arial; background:#f5f8fc; margin:0; text-align:center; }
+    header { background:#002B5B; color:white; padding:16px 20px; display:flex; align-items:center; gap:10px; justify-content:center; }
+    header img { height:40px; }
+    h1 { font-size:22px; }
+    .main { max-width:600px; margin:40px auto; background:white; padding:25px; border-radius:12px; box-shadow:0 3px 15px rgba(0,0,0,0.1); position:relative; }
+    h2 { color:#002B5B; margin-bottom:10px; }
+    .price { font-size:55px; font-weight:bold; color:#FF6600; margin:20px 0; }
+    .info { font-size:18px; color:#333; margin:6px 0; }
+    .closed { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); color:white; font-size:40px; font-weight:bold; display:flex; align-items:center; justify-content:center; border-radius:12px; }
+    footer { background:#002B5B; color:white; text-align:center; padding:12px; margin-top:40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Olive Logo">
+    <h1>Olive Premier League 2025 — Live Auction</h1>
+  </header>
+
+  <div class="main" id="auctionBox">
+    <h2 id="p_name">Waiting for player...</h2>
+    <div class="info" id="p_id">Employee ID: ---</div>
+    <div class="info" id="p_type">Type: ---</div>
+    <div class="info" id="p_base">Base Price: ₹0</div>
+    <div class="price" id="p_bid">₹0</div>
+    <div class="info" id="p_bidder">Top Bidder: ---</div>
+  </div>
+
+  <footer>© 2025 Olive Crypto Systems Pvt. Ltd. — OPL 2025 Live View</footer>
+
+  <script>
+    // Firebase configuration (replace with your actual Firebase config)
+    const firebaseConfig = {
+      apiKey: "PASTE_API_KEY",
+      authDomain: "PASTE_AUTH_DOMAIN",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const nameEl = document.getElementById("p_name");
+    const idEl = document.getElementById("p_id");
+    const typeEl = document.getElementById("p_type");
+    const baseEl = document.getElementById("p_base");
+    const bidEl = document.getElementById("p_bid");
+    const bidderEl = document.getElementById("p_bidder");
+    const box = document.getElementById("auctionBox");
+
+    // Listen for live auction updates
+    db.ref("currentAuction").on("value", snap => {
+      const data = snap.val();
+      if (!data) {
+        nameEl.textContent = "Waiting for next player...";
+        idEl.textContent = "Employee ID: ---";
+        typeEl.textContent = "Type: ---";
+        baseEl.textContent = "Base Price: ₹0";
+        bidEl.textContent = "₹0";
+        bidderEl.textContent = "Top Bidder: ---";
+        box.innerHTML = box.innerHTML.replace(/<div class="closed">.*<\/div>/, '');
+        return;
+      }
+
+      nameEl.textContent = data.name || "---";
+      idEl.textContent = "Employee ID: " + (data.employeeId || "---");
+      typeEl.textContent = "Type: " + (data.type || "---");
+      baseEl.textContent = "Base Price: ₹" + (data.basePrice || 0).toLocaleString();
+      bidEl.textContent = "₹" + (data.currentBid || 0).toLocaleString();
+      bidderEl.textContent = "Top Bidder: " + (data.currentBidder || "---");
+
+      // Show CLOSED overlay if sold
+      if (data.status === "sold") {
+        if (!box.querySelector(".closed")) {
+          const overlay = document.createElement("div");
+          overlay.className = "closed";
+          overlay.textContent = "BID CLOSED";
+          box.appendChild(overlay);
+        }
+      } else {
+        const overlay = box.querySelector(".closed");
+        if (overlay) overlay.remove();
+      }
+    });
+  </script>
+</body>
+</html>
