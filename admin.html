@@ -80,6 +80,7 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     }
     .sold { border-bottom: 1px solid #ddd; padding: 6px 0; }
+    #customAmount { width: 100px; text-align: center; }
   </style>
 </head>
 <body>
@@ -100,13 +101,12 @@
 
     <div class="ownerGrid" id="ownerGrid"></div>
 
+    <!-- Bid Section -->
     <div>
-      <button onclick="increaseBid(INCREMENTS.oneL)">+1 Lakh</button>
-      <button onclick="increaseBid(INCREMENTS.fiveL)">+5 Lakh</button>
-      <button onclick="increaseBid(INCREMENTS.tenL)">+10 Lakh</button>
-      <button onclick="increaseBid(INCREMENTS.twentyFiveL)">+25 Lakh</button>
-      <button onclick="increaseBid(INCREMENTS.fiftyL)">+50 Lakh</button>
-      <button onclick="increaseBid(INCREMENTS.oneCr)">+1 Crore</button>
+      <button onclick="increaseBid(20000)">+ ₹20K</button>
+      <button onclick="increaseBid(50000)">+ ₹50K</button>
+      <input type="number" id="customAmount" placeholder="Custom ₹" min="1" onkeypress="return event.charCode>=48 && event.charCode<=57">
+      <button onclick="addCustomBid()">Add Custom Bid</button>
       <button style="background:green" onclick="markSold()">Mark Sold</button>
     </div>
   </div>
@@ -137,6 +137,7 @@
     © 2025 Olive Crypto Systems Pvt. Ltd. — OPL 2025 Admin Control
   </footer>
 
+  <!-- Firebase and Excel -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -154,9 +155,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const L = 100000, Cr = 10000000;
-    const crToRs = c => Math.round(c * Cr);
-
+    const Cr = 10000000;
     const initialOwners = {
       "Sharath": { captain: "Kalyan", walletCr: 64.5 },
       "Sarath Chava": { captain: "Sai", walletCr: 77 },
@@ -171,12 +170,7 @@
     function initOwners() {
       Object.entries(initialOwners).forEach(([name, o]) => {
         db.ref('owners/' + name).once('value').then(s => {
-          if (!s.exists()) {
-            db.ref('owners/' + name).set({
-              captain: o.captain,
-              wallet: crToRs(o.walletCr)
-            });
-          }
+          if (!s.exists()) db.ref('owners/' + name).set({ captain: o.captain, wallet: o.walletCr * Cr });
         });
       });
     }
@@ -186,10 +180,7 @@
     let currentBid = 0;
     let currentBidder = null;
 
-    const INCREMENTS = { oneL:L, fiveL:5*L, tenL:10*L, twentyFiveL:25*L, fiftyL:50*L, oneCr:1*Cr };
-
     db.ref('players').on('value', s => { players = s.val() || {}; });
-
     db.ref('players').once('value', snap => {
       const list = document.getElementById('playerList');
       if (!snap.exists()) return;
@@ -230,11 +221,7 @@
       document.getElementById('basePrice').innerText = p.basePrice || 0;
       currentBid = Number(p.currentBid || 0);
       updateBid();
-      db.ref('live').set({
-        currentPlayerKey: key,
-        currentBid: currentBid,
-        currentBidder: currentBidder || null
-      });
+      db.ref('live').set({ currentPlayerKey: key, currentBid: currentBid, currentBidder: currentBidder || null });
     }
 
     function selectBidder(name) {
@@ -252,6 +239,13 @@
       currentBid = proposed;
       updateBid();
       db.ref('live').set({ currentPlayerKey:selectedKey, currentBid, currentBidder });
+    }
+
+    function addCustomBid() {
+      const custom = Number(document.getElementById('customAmount').value);
+      if (!custom || custom <= 0) return alert("Enter a valid amount!");
+      increaseBid(custom);
+      document.getElementById('customAmount').value = '';
     }
 
     function markSold() {
@@ -290,16 +284,10 @@
     async function exportSoldPlayers() {
       const ownerFilter = document.getElementById('exportOwner').value;
       const snap = await db.ref('soldPlayers').once('value');
-      if (!snap.exists()) {
-        alert('No sold players found!');
-        return;
-      }
+      if (!snap.exists()) return alert('No sold players found!');
       const data = Object.values(snap.val());
       const filtered = ownerFilter === "All" ? data : data.filter(p => p.team === ownerFilter);
-      if (filtered.length === 0) {
-        alert('No records found for this owner!');
-        return;
-      }
+      if (filtered.length === 0) return alert('No records found for this owner!');
       const exportData = filtered.map(p => ({
         PlayerName: p.name || "",
         Type: p.type || "",
