@@ -347,32 +347,67 @@
     XLSX.writeFile(wb,f==="All"?"All_Sold_Players.xlsx":f+"_Sold_Players.xlsx");
   }
 
-  async function exportAllOwners(){
-    const s=await db.ref('soldPlayers').once('value');
-    if(!s.exists())return alert('No sold players!');
-    const all=Object.values(s.val()),wb=XLSX.utils.book_new();
-    ownersList.forEach(o=>{
-      const pl=all.filter(p=>p.team===o);
-      if(pl.length>0){
-        const sheet=pl.map(p=>({
-          "Player Name":p.name||"","Type":p.type||"","Category":p.category||"",
-          "Base Price":p.basePrice||"","Sold Price":p.currentBid||0,
-          "Team Owner":p.team||"","Status":p.status||""
-        }));
-        const ws=XLSX.utils.json_to_sheet(sheet,{origin:1});
-        XLSX.utils.sheet_add_aoa(ws,[["Player Name","Type","Category","Base Price","Sold Price","Team Owner","Status"]],{origin:"A1"});
-        const tot=pl.reduce((s,p)=>s+(p.currentBid||0),0),cnt=pl.length;
-        XLSX.utils.sheet_add_aoa(ws,[[""]],{origin:-1});
-        XLSX.utils.sheet_add_aoa(ws,[["TOTAL SPENT → ₹"+tot.toLocaleString(),"","","","","","Total Players: "+cnt]],{origin:-1});
-        ws["!cols"]=[{wch:18},{wch:10},{wch:14},{wch:12},{wch:14},{wch:16},{wch:12}];
-        XLSX.utils.book_append_sheet(wb,ws,o);
+ async function exportAllOwners() {
+  const s = await db.ref('soldPlayers').once('value');
+  if (!s.exists()) return alert('No sold players!');
+  const all = Object.values(s.val());
+  const wb = XLSX.utils.book_new();
+
+  ownersList.forEach(o => {
+    const pl = all.filter(p => p.team === o);
+    if (pl.length > 0) {
+      // Prepare clean data for export
+      const sheetData = pl.map(p => ({
+        "Player Name": p.name || "",
+        "Type": p.type || "",
+        "Category": p.category || "",
+        "Base Price": p.basePrice || "",
+        "Sold Price": p.currentBid || 0,
+        "Team Owner": p.team || "",
+        "Status": p.status || ""
+      }));
+
+      // Create sheet with one header row (no duplicate)
+      const ws = XLSX.utils.json_to_sheet(sheetData);
+
+      // Add Total and Count row
+      const totalSpent = pl.reduce((s, p) => s + (p.currentBid || 0), 0);
+      const totalPlayers = pl.length;
+      XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: -1 }); // blank spacer
+      XLSX.utils.sheet_add_aoa(ws, [
+        [`TOTAL SPENT → ₹${totalSpent.toLocaleString()}`, "", "", "", "", "", `Total Players: ${totalPlayers}`]
+      ], { origin: -1 });
+
+      // Set column widths
+      ws["!cols"] = [
+        { wch: 20 }, { wch: 8 }, { wch: 14 }, { wch: 12 },
+        { wch: 14 }, { wch: 16 }, { wch: 10 }
+      ];
+
+      // Apply bold header style manually
+      const headerRange = XLSX.utils.decode_range(ws["!ref"]);
+      for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
+        const cellAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+        if (ws[cellAddr]) {
+          ws[cellAddr].s = {
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+            fill: { fgColor: { rgb: "003D82" } },
+            alignment: { horizontal: "center", vertical: "center" }
+          };
+        }
       }
-    });
-    XLSX.writeFile(wb,"OPL_SoldPlayers_AllOwners.xlsx");
-    alert("✅ Exported beautiful Excel successfully!");
-  }
+
+      XLSX.utils.book_append_sheet(wb, ws, o);
+    }
+  });
+
+  XLSX.writeFile(wb, "OPL_SoldPlayers_AllOwners.xlsx");
+  
+}
+
 
   initOwners();loadOwnersGrid();
 </script>
 </body>
 </html>
+
