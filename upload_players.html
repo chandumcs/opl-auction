@@ -6,14 +6,14 @@
   <title>OPL 2025 — Upload Players to Firebase</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f6fb;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f7fa;
       margin: 0;
       padding: 0;
       text-align: center;
     }
     h2 {
-      color: #0b3d91;
+      color: #003366;
       margin-top: 40px;
     }
     .container {
@@ -21,16 +21,19 @@
       width: 50%;
       margin: 40px auto;
       padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    input[type="file"] {
+      margin: 10px;
     }
     button {
       background-color: #0b3d91;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 10px 25px;
       font-size: 16px;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
@@ -39,25 +42,30 @@
     #log {
       margin-top: 20px;
       text-align: left;
-      background: #eef2ff;
+      background: #eef3ff;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: 10px;
       overflow-y: auto;
-      max-height: 300px;
+      max-height: 350px;
+      font-size: 14px;
+      color: #222;
     }
   </style>
 </head>
 <body>
   <h2>OPL 2025 — Upload Players to Firebase</h2>
+
   <div class="container">
     <input type="file" id="fileInput" accept=".xlsx" />
     <button id="uploadBtn">Upload</button>
     <div id="log"></div>
   </div>
 
-  <!-- ✅ Firebase v9 compat SDKs (works with firebase.initializeApp syntax) -->
+  <!-- ✅ Firebase v9 compat SDK (correct one for GitHub Pages) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- ✅ XLSX library for Excel parsing -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script>
@@ -73,51 +81,51 @@
       measurementId: "G-WT75JLVR2E"
     };
 
-    // ✅ Initialize Firebase
+    // ✅ Initialize Firebase (works on GitHub Pages)
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const uploadBtn = document.getElementById("uploadBtn");
     const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
     const log = document.getElementById("log");
 
     uploadBtn.addEventListener("click", () => {
       const file = fileInput.files[0];
       if (!file) {
-        alert("Please select an Excel file first!");
+        alert("Please select an Excel (.xlsx) file first!");
         return;
       }
 
-      log.innerHTML = "<p>Reading file...</p>";
+      log.innerHTML = "<p>📂 Reading Excel file...</p>";
 
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = function (e) {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet);
+        const players = XLSX.utils.sheet_to_json(sheet);
 
-        log.innerHTML += `<p>✅ Found ${json.length} players. Uploading...</p>`;
+        log.innerHTML += `<p>✅ Found ${players.length} players. Uploading...</p>`;
 
-        json.forEach((player, index) => {
-          const empId = player["Employee ID"] || player["EMP_ID"] || player["ID"] || `emp${index}`;
-          const playerRef = db.ref("players/" + empId);
+        players.forEach((player, index) => {
+          const empId = player["Employee ID"] || player["EMP_ID"] || `player_${index}`;
+          const playerData = {
+            name: player["Name"] || player["Player Name"] || "",
+            type: player["Type"] || player["Category"] || "",
+            basePrice: player["Base Price"] || 0,
+            currentBid: 0,
+            team: "",
+            status: "available"
+          };
 
-          playerRef
-            .set({
-              name: player["Name"] || player["Player Name"] || "",
-              type: player["Type"] || player["Category"] || "",
-              basePrice: player["Base Price"] || 0,
-              currentBid: 0,
-              team: "",
-              status: "available"
-            })
+          db.ref("players/" + empId)
+            .set(playerData)
             .then(() => {
-              log.innerHTML += `<p>✅ Uploaded: ${player["Name"] || empId}</p>`;
+              log.innerHTML += `<p>✅ Uploaded: ${playerData.name || empId}</p>`;
             })
-            .catch((err) => {
-              log.innerHTML += `<p style="color:red;">❌ Error for ${empId}: ${err}</p>`;
+            .catch((error) => {
+              log.innerHTML += `<p style="color:red;">❌ Error for ${empId}: ${error.message}</p>`;
             });
         });
       };
