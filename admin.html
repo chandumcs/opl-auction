@@ -82,6 +82,35 @@
       background: #00a651;
       color: white;
     }
+    .search-box {
+      position: relative;
+      width: 300px;
+      margin: 0 auto;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #suggestions {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      z-index: 10;
+    }
+    #suggestions div {
+      padding: 8px;
+      cursor: pointer;
+      text-align: left;
+    }
+    #suggestions div:hover {
+      background: #f0f0f0;
+    }
     footer {
       background: #002b5c;
       color: white;
@@ -101,7 +130,6 @@
 
   <div class="card">
     <h2>Select Player to Start Auction</h2>
-    <p>Employee ID: <span id="empId">---</span></p>
     <p>Name: <span id="playerName">---</span></p>
     <p>Type: <span id="playerType">---</span></p>
     <p>Class: <span id="playerClass">---</span></p>
@@ -110,12 +138,12 @@
     <div class="amount" id="currentBid">₹0</div>
     <p>Bidder: <span id="currentBidder">---</span></p>
 
-    <input type="text" id="searchInput" placeholder="Enter Employee ID" />
-    <button onclick="searchPlayer()">Search Player</button>
-
-    <div class="owner-grid" id="ownerGrid">
-      <!-- Owner buttons will load here -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search Player by Name" onkeyup="showSuggestions()" autocomplete="off"/>
+      <div id="suggestions"></div>
     </div>
+
+    <div class="owner-grid" id="ownerGrid"></div>
 
     <div>
       <button class="bid-btn" onclick="increaseBid(100000)">+1 Lakh</button>
@@ -149,7 +177,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Owner-captain list
     const owners = [
       { owner: "Sharath", captain: "Kalyan" },
       { owner: "Teja", captain: "Shashank" },
@@ -161,11 +188,11 @@
       { owner: "Ravi Raj", captain: "Suresh" }
     ];
 
-    let currentPlayer = null;
+    let allPlayers = {};
+    let currentPlayerKey = null;
     let currentBid = 0;
     let currentBidder = null;
 
-    // Load owner buttons
     function loadOwners() {
       const grid = document.getElementById("ownerGrid");
       owners.forEach(o => {
@@ -182,40 +209,56 @@
       document.getElementById("currentBidder").innerText = name;
     }
 
-    async function searchPlayer() {
-      const empId = document.getElementById('searchInput').value.trim();
-      if (!empId) return alert("Please enter Employee ID");
-
-      const playerRef = db.ref('players/' + empId);
-      const snapshot = await playerRef.get();
-
+    // Fetch all players from Firebase once
+    db.ref("players").once("value").then(snapshot => {
       if (snapshot.exists()) {
-        currentPlayer = empId;
-        const player = snapshot.val();
-        document.getElementById("empId").innerText = empId;
-        document.getElementById("playerName").innerText = player.name || "---";
-        document.getElementById("playerType").innerText = player.type || "---";
-        document.getElementById("playerClass").innerText = player.class || "---";
-        document.getElementById("playerLocation").innerText = player.location || "---";
-        document.getElementById("basePrice").innerText = player.basePrice || 0;
-        currentBid = player.currentBid || 0;
-        document.getElementById("currentBid").innerText = "₹" + currentBid;
-        document.getElementById("currentBidder").innerText = player.team || "---";
-      } else {
-        alert("❌ No player found with this ID");
+        allPlayers = snapshot.val();
       }
+    });
+
+    function showSuggestions() {
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const suggestionBox = document.getElementById("suggestions");
+      suggestionBox.innerHTML = "";
+
+      if (!input) return;
+
+      const matches = Object.entries(allPlayers).filter(([key, player]) =>
+        player.name && player.name.toLowerCase().includes(input)
+      );
+
+      matches.slice(0, 10).forEach(([key, player]) => {
+        const div = document.createElement("div");
+        div.textContent = `${player.name} (${player.type})`;
+        div.onclick = () => selectPlayer(key, player);
+        suggestionBox.appendChild(div);
+      });
+    }
+
+    function selectPlayer(key, player) {
+      currentPlayerKey = key;
+      currentBid = player.currentBid || 0;
+      document.getElementById("playerName").innerText = player.name || "---";
+      document.getElementById("playerType").innerText = player.type || "---";
+      document.getElementById("playerClass").innerText = player.category || "---";
+      document.getElementById("playerLocation").innerText = player.location || "---";
+      document.getElementById("basePrice").innerText = player.basePrice || 0;
+      document.getElementById("currentBid").innerText = "₹" + currentBid.toLocaleString();
+      document.getElementById("currentBidder").innerText = player.team || "---";
+      document.getElementById("suggestions").innerHTML = "";
+      document.getElementById("searchInput").value = player.name;
     }
 
     function increaseBid(amount) {
-      if (!currentPlayer) return alert("Search a player first!");
+      if (!currentPlayerKey) return alert("Search and select a player first!");
       if (!currentBidder) return alert("Select an owner before bidding!");
       currentBid += amount;
       document.getElementById("currentBid").innerText = "₹" + currentBid.toLocaleString();
     }
 
     function markSold() {
-      if (!currentPlayer || !currentBidder) return alert("Search player and select bidder!");
-      db.ref('players/' + currentPlayer).update({
+      if (!currentPlayerKey || !currentBidder) return alert("Select player and bidder first!");
+      db.ref("players/" + currentPlayerKey).update({
         currentBid: currentBid,
         team: currentBidder,
         status: "sold"
@@ -226,10 +269,9 @@
     }
 
     function resetUI() {
-      currentPlayer = null;
+      currentPlayerKey = null;
       currentBidder = null;
       currentBid = 0;
-      document.getElementById("empId").innerText = "---";
       document.getElementById("playerName").innerText = "---";
       document.getElementById("playerType").innerText = "---";
       document.getElementById("playerClass").innerText = "---";
@@ -237,6 +279,8 @@
       document.getElementById("basePrice").innerText = "0";
       document.getElementById("currentBid").innerText = "₹0";
       document.getElementById("currentBidder").innerText = "---";
+      document.getElementById("searchInput").value = "";
+      document.getElementById("suggestions").innerHTML = "";
     }
 
     loadOwners();
