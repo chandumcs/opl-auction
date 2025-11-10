@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OPL 2025 — Player Board</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: "Poppins", sans-serif; background:#f6f9fc; margin:0; }
+    header { background:#002B5B; color:white; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
+    header h1 { margin:0; font-size:20px; }
+    header img { height:44px; }
+    .container { max-width:1200px; margin:24px auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(350px,1fr)); gap:18px; }
+    .team-card { background:white; border-radius:10px; box-shadow:0 3px 10px rgba(0,0,0,0.08); padding:18px; border-top:6px solid #FF6600; }
+    .team-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .team-name { font-weight:700; font-size:18px; color:#002B5B; }
+    .captain { color:#555; font-size:14px; }
+    .player-list { margin-top:10px; }
+    .player-item { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #eee; font-size:15px; }
+    .total { font-weight:700; margin-top:10px; color:#FF6600; text-align:right; }
+    footer { text-align:center; margin-top:40px; padding:16px; color:#666; font-size:13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="assets/logo.png" alt="Olive Logo" />
+      <h1>Olive Premier League 2025 — Team Player Board</h1>
+    </div>
+    <div id="clock"></div>
+  </header>
+
+  <div class="container" id="teamsContainer">
+    <!-- teams load here -->
+  </div>
+
+  <footer>
+    © 2025 Olive Crypto Systems Pvt. Ltd. — Live Player Board
+  </footer>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "PASTE_API_KEY",
+      authDomain: "PASTE_AUTH_DOMAIN",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const teamsContainer = document.getElementById("teamsContainer");
+
+    // create dynamic team sections
+    function renderTeams(teams) {
+      teamsContainer.innerHTML = '';
+      Object.keys(teams).forEach(teamName => {
+        const t = teams[teamName];
+        const div = document.createElement("div");
+        div.className = "team-card";
+        div.innerHTML = `
+          <div class="team-header">
+            <div>
+              <div class="team-name">${teamName}</div>
+              <div class="captain">Captain: ${t.captain || '—'} | Owner: ${t.ownerName || '—'}</div>
+            </div>
+            <div class="total">₹${(t.total || 0).toLocaleString()}</div>
+          </div>
+          <div class="player-list">
+            ${t.players.map(p => `
+              <div class="player-item">
+                <span>${p.name}</span>
+                <span>₹${(p.soldPrice || 0).toLocaleString()}</span>
+              </div>`).join('')}
+          </div>
+        `;
+        teamsContainer.appendChild(div);
+      });
+    }
+
+    // read from Firebase
+    function loadBoard() {
+      db.ref("players").on("value", snapshot => {
+        const data = snapshot.val() || {};
+        const teams = {};
+        for (let id in data) {
+          const p = data[id];
+          if (p.status === "sold" && p.teamName) {
+            if (!teams[p.teamName]) {
+              teams[p.teamName] = {
+                captain: p.captain || "",
+                ownerName: p.ownerName || p.currentBidder || "",
+                players: [],
+                total: 0
+              };
+            }
+            teams[p.teamName].players.push({
+              name: p.name,
+              soldPrice: p.soldPrice || p.currentBid || p.basePrice
+            });
+            teams[p.teamName].total += p.soldPrice || p.currentBid || p.basePrice;
+          }
+        }
+        renderTeams(teams);
+      });
+    }
+
+    loadBoard();
+
+    // small clock
+    setInterval(() => {
+      document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+    }, 1000);
+  </script>
+</body>
+</html>
