@@ -1,113 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Olive Premier League 2025 — Live Auction</title>
-
-  <!-- Link CSS -->
-  <link rel="stylesheet" href="styles.css" />
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OPL 2025 — Live Auction</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <style>
+    body { font-family: "Segoe UI", Arial; background: #f5f8fc; margin: 0; padding: 0; }
+    header { background: #002b5b; color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+    header img { height: 44px; }
+    .main { max-width: 900px; margin: 30px auto; background: white; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 30px; text-align: center; }
+    h2 { color: #002b5b; margin-bottom: 10px; }
+    .price { font-size: 40px; color: #ff6600; font-weight: bold; margin: 20px 0; }
+    .detail { color: #333; font-size: 18px; margin: 8px 0; }
+    footer { margin-top: 40px; text-align: center; padding: 12px; color: #555; font-size: 14px; }
+    .sold { background: #e8fff0; border: 2px solid #22c55e; }
+    .live { animation: pulse 1.5s infinite; color: #ff6600; }
+    @keyframes pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+  </style>
 </head>
-
 <body>
-  <!-- HEADER -->
-  <header class="topbar">
-    <div style="display:flex;align-items:center;">
-      <img src="assets/logo.png" alt="Olive" class="logo" />
-      <h1>Olive Premier League 2025 — Live Auction 
-        <span class="live-badge">LIVE</span>
-      </h1>
+  <header>
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="assets/logo.png" alt="Olive Logo">
+      <h1>Olive Premier League 2025 — Live Auction</h1>
     </div>
-    <div id="clock" class="clock"></div>
+    <div id="clock"></div>
   </header>
 
-  <!-- CURRENT PLAYER SECTION -->
-  <section class="current-player">
-    <div class="current-card">
-      <h2 id="current-player-name">Loading player...</h2>
-      <p>Employee ID: <span id="current-player-id">---</span></p>
-      <div class="big-price">₹<span id="current-player-bid">0</span></div>
-      <p>Bidder: <strong id="current-player-bidder">---</strong></p>
-    </div>
-  </section>
+  <div class="main" id="auctionBox">
+    <h2 id="p_name">Loading player...</h2>
+    <div class="detail" id="p_id">Employee ID: —</div>
+    <div class="detail" id="p_type">Type: —</div>
+    <div class="detail" id="p_base">Base Price: ₹0</div>
+    <div class="price" id="p_bid">₹0</div>
+    <div class="detail live" id="p_bidder">Bidding in progress...</div>
+    <hr style="margin:25px 0;">
+    <div class="detail" id="p_team" style="display:none;">🏆 <b>Team:</b> —</div>
+    <div class="detail" id="p_captain" style="display:none;">🧢 <b>Captain:</b> —</div>
+    <div class="detail" id="p_owner" style="display:none;">💼 <b>Owner:</b> —</div>
+  </div>
 
-  <!-- ALL PLAYERS GRID -->
-  <section class="grid" id="players-grid">
-    <!-- Player cards will appear here -->
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="footer">
+  <footer>
     © 2025 Olive Crypto Systems Pvt. Ltd. — Olive Premier League Live Auction
   </footer>
 
-  <!-- Firebase Config -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDw6bKsn...EsIxY",
-      authDomain: "opl-2025-season-2.firebaseapp.com",
-      databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "opl-2025-season-2",
-      storageBucket: "opl-2025-season-2.appspot.com",
-      messagingSenderId: "282929654033",
-      appId: "1:282929654033:web:8c51d8414ef45f442b04b0",
-      measurementId: "G-20BWK7G44S"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-  </script>
+<script>
+  // --- Paste your Firebase config here (same as admin.html) ---
+  const firebaseConfig = {
+    apiKey: "PASTE_API_KEY",
+    authDomain: "PASTE_AUTH_DOMAIN",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-  <!-- LIVE AUCTION SCRIPT -->
-  <script>
-    const playersGrid = document.getElementById('players-grid');
-    const currentName = document.getElementById('current-player-name');
-    const currentId = document.getElementById('current-player-id');
-    const currentBid = document.getElementById('current-player-bid');
-    const currentBidder = document.getElementById('current-player-bidder');
+  const p_name = document.getElementById('p_name');
+  const p_id = document.getElementById('p_id');
+  const p_type = document.getElementById('p_type');
+  const p_base = document.getElementById('p_base');
+  const p_bid = document.getElementById('p_bid');
+  const p_bidder = document.getElementById('p_bidder');
+  const p_team = document.getElementById('p_team');
+  const p_captain = document.getElementById('p_captain');
+  const p_owner = document.getElementById('p_owner');
+  const auctionBox = document.getElementById('auctionBox');
 
-    // Load all players in grid
-    db.ref('players').on('value', snapshot => {
-      const players = snapshot.val();
-      playersGrid.innerHTML = '';
-
-      for (let id in players) {
-        const p = players[id];
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <div class="player-name">${p.name}</div>
-          <div class="prices">
-            <span>Base ₹${p.basePrice}</span>
-            <span>Bid ₹${p.currentBid}</span>
-          </div>
-          <div class="status ${p.status}">${p.status.toUpperCase()}</div>
-        `;
-        playersGrid.appendChild(card);
-      }
-    });
-
-    // Listen for current auction player updates
-    db.ref('currentAuction').on('value', snapshot => {
-      const cur = snapshot.val();
-      if (cur) {
-        currentName.textContent = cur.name || "—";
-        currentId.textContent = cur.employeeId || "—";
-        currentBid.textContent = cur.currentBid || "0";
-        currentBidder.textContent = cur.currentBidder || "—";
-      }
-    });
-
-    // Clock
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('clock').innerText = now.toLocaleTimeString();
+  // Realtime listener for current auction
+  db.ref('currentAuction').on('value', snap => {
+    const data = snap.val();
+    if (!data) {
+      p_name.textContent = 'Waiting for next player...';
+      p_id.textContent = '—';
+      p_type.textContent = '—';
+      p_base.textContent = 'Base Price: ₹0';
+      p_bid.textContent = '₹0';
+      p_bidder.textContent = '';
+      p_team.style.display = p_captain.style.display = p_owner.style.display = 'none';
+      auctionBox.classList.remove('sold');
+      return;
     }
-    setInterval(updateClock, 1000);
-  </script>
 
+    p_name.textContent = data.name || '—';
+    p_id.textContent = 'Employee ID: ' + (data.employeeId || '—');
+    p_type.textContent = 'Type: ' + (data.type || '—');
+    p_base.textContent = 'Base Price: ₹' + ((data.basePrice || 0).toLocaleString());
+    p_bid.textContent = '₹' + ((data.currentBid || 0).toLocaleString());
+
+    if (data.status === 'sold') {
+      auctionBox.classList.add('sold');
+      p_bidder.textContent = `SOLD to ${data.currentBidder || ''} for ₹${(data.currentBid || 0).toLocaleString()}`;
+      p_bidder.classList.remove('live');
+      // Show team/captain/owner
+      p_team.style.display = 'block';
+      p_captain.style.display = 'block';
+      p_owner.style.display = 'block';
+      p_team.innerHTML = '🏆 <b>Team:</b> ' + (data.teamName || '—');
+      p_captain.innerHTML = '🧢 <b>Captain:</b> ' + (data.captain || '—');
+      p_owner.innerHTML = '💼 <b>Owner:</b> ' + (data.currentBidder || '—');
+    } else {
+      auctionBox.classList.remove('sold');
+      p_bidder.classList.add('live');
+      p_bidder.textContent = data.currentBidder
+        ? `Current Bidder: ${data.currentBidder}`
+        : 'Bidding in progress...';
+      p_team.style.display = p_captain.style.display = p_owner.style.display = 'none';
+    }
+  });
+
+  // live clock
+  setInterval(()=>{
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+  }, 1000);
+</script>
 </body>
 </html>
