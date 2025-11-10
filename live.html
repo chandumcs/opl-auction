@@ -1,93 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>OPL 2025 — Live Auction</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olive Premier League 2025 — Live Auction</title>
 <style>
-body{font-family:Arial;background:#f5f8ff;margin:0;text-align:center}
-header{background:#002b5c;color:#fff;padding:12px}
-header img{height:40px;vertical-align:middle}
-.panel{background:#fff;margin:15px auto;padding:15px;border-radius:10px;max-width:900px;box-shadow:0 5px 15px rgba(0,0,0,0.06)}
-.name{font-size:30px;font-weight:700;color:#002b5c}
-.bid{font-size:36px;color:#ff6600;font-weight:700}
-.small{font-size:13px;color:#555}
-.owners{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:10px}
-.box{background:#002b5c;color:#fff;padding:8px 12px;border-radius:8px;min-width:150px}
-.box small{display:block;color:#ffd699}
-footer{background:#002b5c;color:#fff;padding:10px;margin-top:15px}
-.sold-item{background:#fff;border-left:5px solid #00a651;padding:8px;border-radius:6px;margin:6px auto;text-align:left;max-width:900px}
+  body { font-family: Arial, sans-serif; background:#f0f4ff; color:#002b5c; text-align:center; margin:0; }
+  header { background:#002b5c; color:white; padding:15px; font-size:22px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
+  header img { height:40px; margin-right:10px; }
+  .playerBox { background:white; margin:30px auto; border-radius:10px; padding:20px; width:90%; max-width:700px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+  .bid { font-size:40px; font-weight:bold; color:orange; margin:10px 0; }
+  .owners { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:20px auto; max-width:800px; }
+  .ownerCard { background:#003d82; color:white; border-radius:8px; padding:10px; }
+  .ownerCard .wallet { font-size:13px; color:#b6e1ff; }
+  .soldList { background:#f9fafc; border-radius:10px; padding:15px; margin:20px auto; width:90%; max-width:800px; text-align:left; box-shadow:0 3px 8px rgba(0,0,0,0.1); }
+  .sold { border-bottom:1px solid #ddd; padding:6px 0; }
 </style>
 </head>
 <body>
-<header>
-  <img src="assets/logo.png"> Olive Premier League 2025 — Live Auction
-</header>
+  <header>
+    <img src="assets/logo.png" alt="logo"> Olive Premier League 2025 — Live Auction
+  </header>
 
-<div class="panel">
-  <div class="name" id="playerName">Waiting for next player...</div>
-  <div class="small" id="playerMeta">Type: — | Class: —</div>
-  <div class="bid" id="bidAmt">₹0</div>
-  <div class="small" id="topBidder">Top Bidder: —</div>
-</div>
+  <div class="playerBox">
+    <h2 id="playerName">Waiting for next player...</h2>
+    <p>Type: <span id="playerType">—</span> | Class: <span id="playerClass">—</span></p>
+    <div class="bid" id="currentBid">₹0</div>
+    <p>Top Bidder: <span id="topBidder">—</span></p>
+  </div>
 
-<div class="panel">
   <h3>Owners & Remaining Wallets</h3>
-  <div class="owners" id="owners"></div>
-</div>
+  <div class="owners" id="ownerGrid"></div>
 
-<div class="panel">
-  <h3>Sold / History</h3>
-  <div id="sold"></div>
-</div>
+  <div class="soldList">
+    <h4>🏏 Sold / History</h4>
+    <div id="soldList"></div>
+  </div>
 
-<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
+  <footer style="background:#002b5c;color:white;padding:10px;font-size:14px;">
+    © 2025 Olive Crypto Systems Pvt. Ltd.
+  </footer>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
-const config={apiKey:"AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",authDomain:"opl-2025-season-2.firebaseapp.com",databaseURL:"https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"opl-2025-season-2",storageBucket:"opl-2025-season-2.firebasestorage.app",messagingSenderId:"282929654033",appId:"1:282929654033:web:535ab2b78937cdfa2b04b0"};
-firebase.initializeApp(config);const db=firebase.database();
+const firebaseConfig = {
+  apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+  authDomain: "opl-2025-season-2.firebaseapp.com",
+  databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "opl-2025-season-2",
+  storageBucket: "opl-2025-season-2.firebasestorage.app",
+  messagingSenderId: "282929654033",
+  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const Cr = 10000000;
 
-// live updates
-db.ref("live").on("value",s=>{
- const v=s.val()||{};
- if(v.currentPlayer){
-   document.getElementById("playerName").innerText=v.currentPlayer.name||"—";
-   document.getElementById("playerMeta").innerText=`Type: ${v.currentPlayer.type||'—'} | Class: ${v.currentPlayer.category||'—'}`;
- } else {
-   document.getElementById("playerName").innerText="Waiting for next player...";
-   document.getElementById("playerMeta").innerText="Type: — | Class: —";
- }
- document.getElementById("bidAmt").innerText="₹"+((v.currentBid)||0).toLocaleString();
- document.getElementById("topBidder").innerText="Top Bidder: "+(v.currentBidder||"—");
+db.ref('live').on('value', async snap => {
+  const data = snap.val() || {};
+  if (!data.currentPlayerKey) {
+    document.getElementById('playerName').innerText = "Waiting for next player...";
+    document.getElementById('playerType').innerText = "—";
+    document.getElementById('playerClass').innerText = "—";
+    document.getElementById('currentBid').innerText = "₹" + (data.currentBid || 0).toLocaleString();
+    document.getElementById('topBidder').innerText = data.currentBidder || "—";
+    return;
+  }
+  const pSnap = await db.ref('players/' + data.currentPlayerKey).once('value');
+  const p = pSnap.val() || {};
+  document.getElementById('playerName').innerText = p.name || "Unknown Player";
+  document.getElementById('playerType').innerText = p.type || "-";
+  document.getElementById('playerClass').innerText = p.category || "-";
+  document.getElementById('currentBid').innerText = "₹" + (data.currentBid || 0).toLocaleString();
+  document.getElementById('topBidder').innerText = data.currentBidder || "—";
 });
 
-// owners wallets
-db.ref("owners").on("value",s=>{
- const div=document.getElementById("owners");div.innerHTML="";
- const val=s.val()||{};
- Object.keys(val).forEach(n=>{
-   const o=val[n];
-   const d=document.createElement("div");
-   d.className="box";
-   d.innerHTML=`<b>${n}</b><small>${o.captain||''}</small><div>₹${(o.wallet||0).toLocaleString()} (${(o.wallet/10000000).toFixed(2)}Cr)</div>`;
-   div.appendChild(d);
- });
+db.ref('owners').on('value', s => {
+  const grid = document.getElementById('ownerGrid');
+  grid.innerHTML = '';
+  const o = s.val() || {};
+  Object.keys(o).forEach(k => {
+    const d = document.createElement('div');
+    d.className = 'ownerCard';
+    d.innerHTML = `<div><b>${k}</b></div><div>${o[k].captain}</div><div class='wallet'>₹${Number(o[k].wallet||0).toLocaleString()} (${(o[k].wallet/Cr).toFixed(2)}Cr)</div>`;
+    grid.appendChild(d);
+  });
 });
 
-// sold history
-db.ref("soldPlayers").on("value",s=>{
- const d=document.getElementById("sold");d.innerHTML="";
- if(!s.exists())return;
- const arr=Object.values(s.val()).reverse();
- arr.forEach(p=>{
-   const div=document.createElement("div");
-   div.className="sold-item";
-   div.innerHTML=`<b>${p.name}</b> (${p.type}) — ₹${(p.currentBid||0).toLocaleString()} | <b>${p.team}</b>`;
-   d.appendChild(div);
- });
-});
-</script>
-</body>
-</html>
+db.ref('soldPlayers').on('value', s => {
+  const el = document.getElementById('soldList');
+  el.innerHTML = '';
+  if (!s.exists()) return;
+  Object.values(s.val()).reverse().forEach(p => {
+    const d = document
