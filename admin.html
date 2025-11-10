@@ -94,7 +94,8 @@
     <div class="bid" id="currentBid">₹0</div>
     <p>Top Bidder: <span id="currentBidder">---</span></p>
 
-    <input id="searchBox" type="text" placeholder="Search Player..." />
+    <input list="playerList" id="searchBox" type="text" placeholder="Search Player..." />
+    <datalist id="playerList"></datalist>
     <button onclick="searchPlayer()">Search Player</button>
 
     <div class="ownerGrid" id="ownerGrid"></div>
@@ -135,11 +136,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 💰 Conversion
     const L = 100000, Cr = 10000000;
     const crToRs = c => Math.round(c * Cr);
 
-    // 🧍 Owners
     const initialOwners = {
       "Sharath": { captain: "Kalyan", walletCr: 64.5 },
       "Sarath Chava": { captain: "Sai", walletCr: 77 },
@@ -151,7 +150,6 @@
       "Mahinder": { captain: "Sai Varma", walletCr: 66 }
     };
 
-    // Initialize wallets if missing
     function initOwners() {
       Object.entries(initialOwners).forEach(([name, o]) => {
         db.ref('owners/' + name).once('value').then(s => {
@@ -165,7 +163,6 @@
       });
     }
 
-    // 🧮 Variables
     let players = {};
     let selectedKey = null;
     let currentBid = 0;
@@ -173,10 +170,18 @@
 
     const INCREMENTS = { oneL:L, fiveL:5*L, tenL:10*L, twentyFiveL:25*L, fiftyL:50*L, oneCr:1*Cr };
 
-    // 🧾 Player data
     db.ref('players').on('value', s => { players = s.val() || {}; });
 
-    // 🧍 Owner grid
+    db.ref('players').once('value', snap => {
+      const list = document.getElementById('playerList');
+      if (!snap.exists()) return;
+      Object.values(snap.val()).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        list.appendChild(opt);
+      });
+    });
+
     function loadOwnersGrid() {
       const grid = document.getElementById('ownerGrid');
       grid.innerHTML = '';
@@ -196,27 +201,31 @@
       });
     }
 
-    // 🔍 Search player
     function searchPlayer() {
       const q = document.getElementById('searchBox').value.toLowerCase();
       const key = Object.keys(players).find(k => (players[k].name || '').toLowerCase().includes(q));
       if (!key) return alert('Player not found');
+
       selectedKey = key;
       const p = players[key];
-      document.getElementById('playerName').innerText = p.name;
-      document.getElementById('playerType').innerText = p.type;
+      document.getElementById('playerName').innerText = p.name || "---";
+      document.getElementById('playerType').innerText = p.type || "-";
       document.getElementById('basePrice').innerText = p.basePrice || 0;
       currentBid = Number(p.currentBid || 0);
       updateBid();
+
+      db.ref('live').set({
+        currentPlayerKey: key,
+        currentBid: currentBid,
+        currentBidder: currentBidder || null
+      });
     }
 
-    // 👆 Select bidder
     function selectBidder(name) {
       currentBidder = name;
       document.getElementById('currentBidder').innerText = name;
     }
 
-    // 💸 Increase bid
     async function increaseBid(amount) {
       if (!selectedKey) return alert('Select a player first');
       if (!currentBidder) return alert('Select an owner first');
@@ -229,7 +238,6 @@
       db.ref('live').set({ currentPlayerKey:selectedKey, currentBid, currentBidder });
     }
 
-    // ✅ Mark sold
     function markSold() {
       if (!selectedKey || !currentBidder) return alert('Select player and owner');
       const ref = db.ref('owners/' + currentBidder + '/wallet');
@@ -240,18 +248,17 @@
         await db.ref('players/' + selectedKey).update(data);
         await db.ref('soldPlayers').push(data);
         alert(`${p.name} sold to ${currentBidder} for ₹${currentBid.toLocaleString()}`);
+        db.ref('live').set({});
         currentBid = 0;
         updateBid();
         document.getElementById('currentBidder').innerText = '---';
       });
     }
 
-    // 🪄 Update bid
     function updateBid() {
       document.getElementById('currentBid').innerText = '₹' + currentBid.toLocaleString();
     }
 
-    // 🧾 Sold history
     db.ref('soldPlayers').on('value', s => {
       const el = document.getElementById('soldList');
       el.innerHTML = '';
@@ -264,7 +271,6 @@
       });
     });
 
-    // 🚀 Init
     initOwners();
     loadOwnersGrid();
   </script>
