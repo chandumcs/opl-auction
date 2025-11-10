@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reset Wallets — OPL 2025</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f0f4ff;
+      color: #002b5c;
+      padding: 50px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:hover { background: #0056b3; }
+    .log {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+      width: 70%;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: left;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🏏 Reset Owner Wallets (OPL 2025)</h2>
+  <p>This tool will reset all owner wallets to their correct starting balances (in Crores).</p>
+  <button onclick="resetWallets()">Reset Wallets Now</button>
+
+  <div class="log" id="log"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+  const firebaseConfig = {
+    apiKey:"AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+    authDomain:"opl-2025-season-2.firebaseapp.com",
+    databaseURL:"https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"opl-2025-season-2",
+    storageBucket:"opl-2025-season-2.firebasestorage.app",
+    messagingSenderId:"282929654033",
+    appId:"1:282929654033:web:535ab2b78937cdfa2b04b0"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // 💰 Each crore = 1e7 rupees
+  const crToRs = cr => Math.round(cr * 10000000);
+
+  const owners = {
+    "Sharath": { captain: "Kalyan", walletCr: 64.5 },
+    "Sarath Chava": { captain: "Sai", walletCr: 77 },
+    "Teja": { captain: "Shashank", walletCr: 75 },
+    "Vamsi": { captain: "Surender", walletCr: 69.5 },
+    "Rajan": { captain: "Vamsi", walletCr: 62 },
+    "Shabeer": { captain: "Vijayander", walletCr: 70 },
+    "Ravi Raj": { captain: "Suresh", walletCr: 72 },
+    "Mahinder": { captain: "Sai Varma", walletCr: 66 }
+  };
+
+  function log(msg) {
+    document.getElementById("log").innerHTML += msg + "<br>";
+  }
+
+  async function resetWallets() {
+    log("Starting wallet reset...");
+    for (const [name, o] of Object.entries(owners)) {
+      await db.ref("owners/" + name).set({
+        captain: o.captain,
+        wallet: crToRs(o.walletCr)
+      });
+      log(`✅ ${name} set to ₹${crToRs(o.walletCr).toLocaleString()} (${o.walletCr} Cr)`);
+    }
+    log("<br><b>All wallets successfully reset!</b>");
+    alert("All wallets have been reset successfully.");
+  }
+  </script>
+</body>
+</html>
