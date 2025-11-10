@@ -14,6 +14,7 @@
     .owner { background: #002b5c; color: white; border-radius: 8px; padding: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .owner:hover { background: #004080; }
     .owner small { display: block; color: #ffb74d; font-size: 13px; }
+    .wallet { font-size: 13px; margin-top: 5px; color: #9aff9a; }
     button { border: none; padding: 10px 15px; border-radius: 5px; margin: 5px; cursor: pointer; font-weight: bold; }
     .bid-btn { background: #eee; }
     .bid-btn:hover { background: #ccc; }
@@ -103,13 +104,26 @@
     let currentPlayerKey = null;
     let currentBid = 0;
     let currentBidder = null;
+    let ownerWallets = {};
+
+    function initializeOwners() {
+      owners.forEach(o => {
+        db.ref("owners/" + o.owner).once("value").then(snap => {
+          if (!snap.exists()) {
+            db.ref("owners/" + o.owner).set({ captain: o.captain, wallet: 1000000000 });
+          }
+        });
+      });
+    }
 
     function loadOwners() {
       const grid = document.getElementById("ownerGrid");
+      grid.innerHTML = "";
       owners.forEach(o => {
         const div = document.createElement("div");
         div.classList.add("owner");
-        div.innerHTML = `${o.owner}<small>${o.captain}</small>`;
+        div.id = "owner-" + o.owner;
+        div.innerHTML = `${o.owner}<small>${o.captain}</small><div class="wallet" id="wallet-${o.owner}">Loading...</div>`;
         div.onclick = () => selectBidder(o.owner);
         grid.appendChild(div);
       });
@@ -118,11 +132,20 @@
     function selectBidder(name) {
       currentBidder = name;
       document.getElementById("currentBidder").innerText = name;
-      // Broadcast live bidder update
       db.ref("live/currentBidder").set(name);
     }
 
-    // Load all players initially
+    // Sync wallet updates live
+    db.ref("owners").on("value", snap => {
+      if (snap.exists()) {
+        ownerWallets = snap.val();
+        Object.entries(ownerWallets).forEach(([name, data]) => {
+          const el = document.getElementById("wallet-" + name);
+          if (el) el.innerText = "₹" + (data.wallet / 10000000).toFixed(2) + " Cr";
+        });
+      }
+    });
+
     db.ref("players").once("value").then(snapshot => {
       if (snapshot.exists()) allPlayers = snapshot.val();
     });
@@ -158,17 +181,16 @@
       document.getElementById("suggestions").innerHTML = "";
       document.getElementById("searchInput").value = player.name;
 
-      // Broadcast selected player to live
       db.ref("live/currentPlayer").set(player);
     }
 
     function increaseBid(amount) {
-      if (!currentPlayerKey) return alert("Search and select a player first!");
-      if (!currentBidder) return alert("Select an owner before bidding!");
+      if (!currentPlayerKey) return alert("Select a player first!");
+      if (!currentBidder) return alert("Select an owner first!");
+      const wallet = ownerWallets[currentBidder]?.wallet || 0;
+      if (wallet < currentBid + amount) return alert("❌ Insufficient wallet balance!");
       currentBid += amount;
       document.getElementById("currentBid").innerText = "₹" + currentBid.toLocaleString();
-
-      // Broadcast bid live
       db.ref("live/currentBid").set(currentBid);
     }
 
@@ -181,14 +203,12 @@
         status: "sold",
         soldTime: new Date().toISOString()
       };
-      // Update in players
+      const newWallet = ownerWallets[currentBidder].wallet - currentBid;
+      db.ref("owners/" + currentBidder + "/wallet").set(newWallet);
       db.ref("players/" + currentPlayerKey).update(playerData);
-      // Add to soldPlayers
       db.ref("soldPlayers").push(playerData);
-      // Broadcast reset
       db.ref("live").set({});
-
-      alert("✅ Player marked as SOLD!");
+      alert(`✅ ${playerData.name} SOLD to ${currentBidder} for ₹${currentBid.toLocaleString()}`);
       resetUI();
     }
 
@@ -207,7 +227,6 @@
       document.getElementById("suggestions").innerHTML = "";
     }
 
-    // Show live sold list
     db.ref("soldPlayers").on("value", snapshot => {
       const soldList = document.getElementById("soldList");
       soldList.innerHTML = "";
@@ -222,6 +241,7 @@
       }
     });
 
+    initializeOwners();
     loadOwners();
   </script>
 </body>
