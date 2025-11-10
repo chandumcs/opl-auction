@@ -38,7 +38,7 @@
       color: orange;
       margin: 10px 0;
     }
-    input, button {
+    input, button, select {
       padding: 8px 14px;
       font-size: 15px;
       border-radius: 5px;
@@ -116,14 +116,32 @@
     <div id="soldList"></div>
   </div>
 
+  <!-- Export Section -->
+  <div style="margin-top:20px;">
+    <label for="exportOwner">Filter by Owner: </label>
+    <select id="exportOwner">
+      <option value="All">All Owners</option>
+      <option value="Sharath">Sharath</option>
+      <option value="Sarath Chava">Sarath Chava</option>
+      <option value="Teja">Teja</option>
+      <option value="Vamsi">Vamsi</option>
+      <option value="Rajan">Rajan</option>
+      <option value="Shabeer">Shabeer</option>
+      <option value="Ravi Raj">Ravi Raj</option>
+      <option value="Mahinder">Mahinder</option>
+    </select>
+    <button onclick="exportSoldPlayers()">📤 Export Sold Players</button>
+  </div>
+
   <footer style="background:#002b5c;color:white;padding:10px;font-size:14px;">
     © 2025 Olive Crypto Systems Pvt. Ltd. — OPL 2025 Admin Control
   </footer>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script>
-    // ✅ Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
       authDomain: "opl-2025-season-2.firebaseapp.com",
@@ -205,7 +223,6 @@
       const q = document.getElementById('searchBox').value.toLowerCase();
       const key = Object.keys(players).find(k => (players[k].name || '').toLowerCase().includes(q));
       if (!key) return alert('Player not found');
-
       selectedKey = key;
       const p = players[key];
       document.getElementById('playerName').innerText = p.name || "---";
@@ -213,7 +230,6 @@
       document.getElementById('basePrice').innerText = p.basePrice || 0;
       currentBid = Number(p.currentBid || 0);
       updateBid();
-
       db.ref('live').set({
         currentPlayerKey: key,
         currentBid: currentBid,
@@ -270,6 +286,35 @@
         el.appendChild(d);
       });
     });
+
+    async function exportSoldPlayers() {
+      const ownerFilter = document.getElementById('exportOwner').value;
+      const snap = await db.ref('soldPlayers').once('value');
+      if (!snap.exists()) {
+        alert('No sold players found!');
+        return;
+      }
+      const data = Object.values(snap.val());
+      const filtered = ownerFilter === "All" ? data : data.filter(p => p.team === ownerFilter);
+      if (filtered.length === 0) {
+        alert('No records found for this owner!');
+        return;
+      }
+      const exportData = filtered.map(p => ({
+        PlayerName: p.name || "",
+        Type: p.type || "",
+        Category: p.category || "",
+        BasePrice: p.basePrice || "",
+        SoldPrice: p.currentBid || 0,
+        TeamOwner: p.team || "",
+        Status: p.status || "",
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sold Players");
+      const fileName = ownerFilter === "All" ? "All_Sold_Players.xlsx" : ownerFilter + "_Sold_Players.xlsx";
+      XLSX.writeFile(wb, fileName);
+    }
 
     initOwners();
     loadOwnersGrid();
