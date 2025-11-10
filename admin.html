@@ -1,197 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>OPL 2025 — Admin Control</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OPL 2025 — Admin Control Panel</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#f5f8ff;margin:0;text-align:center}
-    header{background:#002b5c;color:#fff;padding:12px;display:flex;align-items:center;gap:10px}
-    header img{height:40px}
-    .wrap{max-width:1100px;margin:20px auto;padding:10px}
-    .card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.08);margin-bottom:20px}
-    .amount{font-size:36px;color:#ff6600;font-weight:700}
-    .owner-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px auto;max-width:900px}
-    .owner{background:#002b5c;color:#fff;border-radius:8px;padding:10px;cursor:pointer}
-    .owner small{display:block;color:#ffb74d}
-    .wallet{font-size:13px;margin-top:4px;color:#b9ff9f}
-    input[type=text]{padding:8px;border-radius:5px;border:1px solid #ccc;width:300px}
-    button{padding:8px 12px;border:none;border-radius:5px;margin:4px;cursor:pointer}
-    .inc{background:#eee}
-    .sell{background:#00a651;color:#fff}
-    .suggest{position:relative;width:300px;margin:0 auto}
-    #suggestions{position:absolute;top:38px;left:0;right:0;background:#fff;border:1px solid #ccc;border-radius:5px;z-index:10}
-    #suggestions div{padding:8px;text-align:left;cursor:pointer}
-    #suggestions div:hover{background:#f2f2f2}
-    .sold-card{background:#fff;border-left:5px solid #00a651;padding:10px;border-radius:6px;margin-bottom:8px;text-align:left}
-    footer{background:#002b5c;color:#fff;padding:10px}
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4ff;
+      color: #002b5c;
+      text-align: center;
+      margin: 0;
+    }
+    header {
+      background: #002b5c;
+      color: white;
+      padding: 15px;
+      font-size: 22px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    header img { height: 40px; margin-right: 10px; }
+    .container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin: 30px auto;
+      width: 90%;
+      max-width: 800px;
+      padding: 20px;
+    }
+    .bid {
+      font-size: 40px;
+      font-weight: bold;
+      color: orange;
+      margin: 10px 0;
+    }
+    input, button {
+      padding: 8px 14px;
+      font-size: 15px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin: 5px;
+    }
+    button {
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+    }
+    button:hover { background: #0056b3; }
+    .ownerGrid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 20px auto;
+      max-width: 700px;
+    }
+    .ownerCard {
+      background: #003d82;
+      color: white;
+      border-radius: 8px;
+      padding: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .ownerCard:hover { background: #0056b3; }
+    .ownerCard .wallet { font-size: 13px; color: #b6e1ff; }
+    .soldList {
+      background: #f9fafc;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 800px;
+      text-align: left;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    .sold { border-bottom: 1px solid #ddd; padding: 6px 0; }
   </style>
 </head>
 <body>
-<header>
-  <img src="assets/logo.png" alt="Olive">
-  <h2>Olive Premier League 2025 — Admin Control</h2>
-</header>
+  <header>
+    <img src="assets/logo.png" alt="Olive Logo"> OPL 2025 — Admin Control Panel
+  </header>
 
-<div class="wrap">
-  <div class="card">
-    <h3>Current Player</h3>
-    <div><b>Name:</b> <span id="playerName">—</span></div>
-    <div><b>Type:</b> <span id="playerType">—</span></div>
-    <div><b>Class:</b> <span id="playerClass">—</span></div>
-    <div><b>Location:</b> <span id="playerLocation">—</span></div>
-    <div><b>Base Price:</b> ₹<span id="basePrice">0</span></div>
-    <div class="amount" id="currentBid">₹0</div>
-    <div><b>Top Bidder:</b> <span id="currentBidder">—</span></div>
+  <div class="container">
+    <h3>Select Player to Start Auction</h3>
+    <p id="playerName">---</p>
+    <p>Type: <span id="playerType">---</span> | Base Price: ₹<span id="basePrice">0</span></p>
+    <div class="bid" id="currentBid">₹0</div>
+    <p>Top Bidder: <span id="currentBidder">---</span></p>
 
-    <div class="suggest">
-      <input type="text" id="searchInput" placeholder="Search player by name..." onkeyup="showSuggestions()" />
-      <div id="suggestions"></div>
-    </div>
+    <input id="searchBox" type="text" placeholder="Search Player..." />
+    <button onclick="searchPlayer()">Search Player</button>
 
-    <div class="owner-grid" id="ownerGrid"></div>
+    <div class="ownerGrid" id="ownerGrid"></div>
 
     <div>
-      <button class="inc" onclick="increaseBid(100000)">+1L</button>
-      <button class="inc" onclick="increaseBid(500000)">+5L</button>
-      <button class="inc" onclick="increaseBid(1000000)">+10L</button>
-      <button class="inc" onclick="increaseBid(2500000)">+25L</button>
-      <button class="inc" onclick="increaseBid(5000000)">+50L</button>
-      <button class="inc" onclick="increaseBid(10000000)">+1Cr</button>
-      <button class="sell" onclick="markSold()">Mark Sold</button>
+      <button onclick="increaseBid(INCREMENTS.oneL)">+1 Lakh</button>
+      <button onclick="increaseBid(INCREMENTS.fiveL)">+5 Lakh</button>
+      <button onclick="increaseBid(INCREMENTS.tenL)">+10 Lakh</button>
+      <button onclick="increaseBid(INCREMENTS.twentyFiveL)">+25 Lakh</button>
+      <button onclick="increaseBid(INCREMENTS.fiftyL)">+50 Lakh</button>
+      <button onclick="increaseBid(INCREMENTS.oneCr)">+1 Crore</button>
+      <button style="background:green" onclick="markSold()">Mark Sold</button>
     </div>
   </div>
 
-  <div class="card">
-    <h3>🏏 Sold Players / Auction History</h3>
+  <div class="soldList">
+    <h4>🏏 Sold Players / Auction History</h4>
     <div id="soldList"></div>
   </div>
-</div>
 
-<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
+  <footer style="background:#002b5c;color:white;padding:10px;font-size:14px;">
+    © 2025 Olive Crypto Systems Pvt. Ltd. — OPL 2025 Admin Control
+  </footer>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script>
-const firebaseConfig = {
-  apiKey:"AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
-  authDomain:"opl-2025-season-2.firebaseapp.com",
-  databaseURL:"https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"opl-2025-season-2",
-  storageBucket:"opl-2025-season-2.firebasestorage.app",
-  messagingSenderId:"282929654033",
-  appId:"1:282929654033:web:535ab2b78937cdfa2b04b0",
-  measurementId:"G-WT75JLVR2E"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    // ✅ Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+      authDomain: "opl-2025-season-2.firebaseapp.com",
+      databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "opl-2025-season-2",
+      storageBucket: "opl-2025-season-2.firebasestorage.app",
+      messagingSenderId: "282929654033",
+      appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-// Initial owners (deductions applied)
-const initialOwners={
- "Sharath":{captain:"Kalyan",wallet:64.5},
- "Sarath Chava":{captain:"Sai",wallet:77},
- "Teja":{captain:"Shashank",wallet:74.5},
- "Vamsi":{captain:"Surender",wallet:69.5},
- "Rajan":{captain:"Vamsi",wallet:62},
- "Shabeer":{captain:"Vijayander",wallet:70},
- "Ravi Raj":{captain:"Suresh",wallet:75},
- "Mahinder":{captain:"Sai Varma",wallet:66}
-};
-const crToRs=c=>Math.round(c*10000000);
-function initOwners(){
-  Object.entries(initialOwners).forEach(([n,o])=>{
-    const ref=db.ref("owners/"+n);
-    ref.get().then(s=>{if(!s.exists())ref.set({captain:o.captain,wallet:crToRs(o.wallet)})});
-  });
-}
-function loadOwners(){
-  const grid=document.getElementById("ownerGrid");
-  grid.innerHTML="";
-  Object.keys(initialOwners).forEach(n=>{
-    const d=document.createElement("div");
-    d.className="owner";
-    d.innerHTML=`${n}<small>${initialOwners[n].captain}</small><div class="wallet" id="wallet-${n}">—</div>`;
-    d.onclick=()=>selectBidder(n);
-    grid.appendChild(d);
-  });
-  db.ref("owners").on("value",s=>{
-    const v=s.val()||{};
-    Object.keys(v).forEach(k=>{
-      const el=document.getElementById("wallet-"+k);
-      if(el)el.innerText="₹"+(v[k].wallet||0).toLocaleString()+" ("+(v[k].wallet/10000000).toFixed(2)+"Cr)";
-    });
-  });
-}
-let allPlayers={},selKey=null,currentBid=0,bidder=null;
-db.ref("players").on("value",s=>{allPlayers=s.val()||{}});
-function showSuggestions(){
-  const q=document.getElementById("searchInput").value.toLowerCase();
-  const box=document.getElementById("suggestions");
-  box.innerHTML="";
-  if(!q)return;
-  Object.entries(allPlayers).forEach(([k,p])=>{
-    if(p.name&&p.name.toLowerCase().includes(q)){
-      const div=document.createElement("div");
-      div.textContent=p.name+" ("+(p.type||"")+")";
-      div.onclick=()=>selectPlayer(k,p);
-      box.appendChild(div);
+    // 💰 Conversion
+    const L = 100000, Cr = 10000000;
+    const crToRs = c => Math.round(c * Cr);
+
+    // 🧍 Owners
+    const initialOwners = {
+      "Sharath": { captain: "Kalyan", walletCr: 64.5 },
+      "Sarath Chava": { captain: "Sai", walletCr: 77 },
+      "Teja": { captain: "Shashank", walletCr: 75 },
+      "Vamsi": { captain: "Surender", walletCr: 69.5 },
+      "Rajan": { captain: "Vamsi", walletCr: 62 },
+      "Shabeer": { captain: "Vijayander", walletCr: 70 },
+      "Ravi Raj": { captain: "Suresh", walletCr: 72 },
+      "Mahinder": { captain: "Sai Varma", walletCr: 66 }
+    };
+
+    // Initialize wallets if missing
+    function initOwners() {
+      Object.entries(initialOwners).forEach(([name, o]) => {
+        db.ref('owners/' + name).once('value').then(s => {
+          if (!s.exists()) {
+            db.ref('owners/' + name).set({
+              captain: o.captain,
+              wallet: crToRs(o.walletCr)
+            });
+          }
+        });
+      });
     }
-  });
-}
-function selectPlayer(k,p){
-  selKey=k;currentBid=p.currentBid||0;
-  document.getElementById("playerName").innerText=p.name;
-  document.getElementById("playerType").innerText=p.type||"-";
-  document.getElementById("playerClass").innerText=p.category||"-";
-  document.getElementById("playerLocation").innerText=p.location||"-";
-  document.getElementById("basePrice").innerText=p.basePrice||0;
-  document.getElementById("currentBid").innerText="₹"+currentBid.toLocaleString();
-  db.ref("live").set({currentPlayer:p,currentBid, currentBidder:null});
-  document.getElementById("suggestions").innerHTML="";
-}
-function selectBidder(n){
-  bidder=n;
-  document.getElementById("currentBidder").innerText=n;
-  db.ref("live/currentBidder").set(n);
-}
-function increaseBid(a){
-  if(!selKey)return alert("Select player");
-  if(!bidder)return alert("Select owner");
-  db.ref("owners/"+bidder+"/wallet").get().then(s=>{
-    const w=s.val()?.wallet||0;
-    if(w<currentBid+a)return alert("Not enough balance");
-    currentBid+=a;
-    document.getElementById("currentBid").innerText="₹"+currentBid.toLocaleString();
-    db.ref("live/currentBid").set(currentBid);
-  });
-}
-function markSold(){
-  if(!selKey||!bidder)return alert("Select player & bidder");
-  const own=db.ref("owners/"+bidder+"/wallet");
-  own.transaction(cur=>{
-    if(cur===null||cur<currentBid)return;
-    return cur-currentBid;
-  },(e,c,snap)=>{
-    if(!c)return alert("Wallet insufficient");
-    const p=allPlayers[selKey];
-    p.currentBid=currentBid;p.team=bidder;p.status="sold";p.soldTime=new Date().toISOString();
-    db.ref("players/"+selKey).update(p);
-    db.ref("soldPlayers").push(p);
-    db.ref("live").set({});
-    alert(`${p.name} SOLD to ${bidder} for ₹${currentBid.toLocaleString()}`);
-  });
-}
-db.ref("soldPlayers").on("value",s=>{
-  const list=document.getElementById("soldList");list.innerHTML="";
-  if(!s.exists())return;
-  Object.values(s.val()).reverse().forEach(p=>{
-    const d=document.createElement("div");
-    d.className="sold-card";
-    d.innerHTML=`<b>${p.name}</b> (${p.type}) — ₹${(p.currentBid||0).toLocaleString()} | <b>${p.team}</b>`;
-    list.appendChild(d);
-  });
-});
-initOwners();loadOwners();
-</script>
+
+    // 🧮 Variables
+    let players = {};
+    let selectedKey = null;
+    let currentBid = 0;
+    let currentBidder = null;
+
+    const INCREMENTS = { oneL:L, fiveL:5*L, tenL:10*L, twentyFiveL:25*L, fiftyL:50*L, oneCr:1*Cr };
+
+    // 🧾 Player data
+    db.ref('players').on('value', s => { players = s.val() || {}; });
+
+    // 🧍 Owner grid
+    function loadOwnersGrid() {
+      const grid = document.getElementById('ownerGrid');
+      grid.innerHTML = '';
+      Object.keys(initialOwners).forEach(name => {
+        const d = document.createElement('div');
+        d.className = 'ownerCard';
+        d.innerHTML = `<div>${name}</div><div>${initialOwners[name].captain}</div><div class="wallet" id="wallet_${name}">Loading...</div>`;
+        d.onclick = () => selectBidder(name);
+        grid.appendChild(d);
+      });
+      db.ref('owners').on('value', s => {
+        const obj = s.val() || {};
+        Object.keys(obj).forEach(k => {
+          const el = document.getElementById('wallet_' + k);
+          if (el) el.innerText = '₹' + Number(obj[k].wallet || 0).toLocaleString() + ' (' + ((Number(obj[k].wallet||0)/Cr).toFixed(2)) + 'Cr)';
+        });
+      });
+    }
+
+    // 🔍 Search player
+    function searchPlayer() {
+      const q = document.getElementById('searchBox').value.toLowerCase();
+      const key = Object.keys(players).find(k => (players[k].name || '').toLowerCase().includes(q));
+      if (!key) return alert('Player not found');
+      selectedKey = key;
+      const p = players[key];
+      document.getElementById('playerName').innerText = p.name;
+      document.getElementById('playerType').innerText = p.type;
+      document.getElementById('basePrice').innerText = p.basePrice || 0;
+      currentBid = Number(p.currentBid || 0);
+      updateBid();
+    }
+
+    // 👆 Select bidder
+    function selectBidder(name) {
+      currentBidder = name;
+      document.getElementById('currentBidder').innerText = name;
+    }
+
+    // 💸 Increase bid
+    async function increaseBid(amount) {
+      if (!selectedKey) return alert('Select a player first');
+      if (!currentBidder) return alert('Select an owner first');
+      const snap = await db.ref('owners/' + currentBidder + '/wallet').once('value');
+      const wallet = Number(snap.val() || 0);
+      const proposed = currentBid + amount;
+      if (wallet < proposed) return alert('Not enough balance');
+      currentBid = proposed;
+      updateBid();
+      db.ref('live').set({ currentPlayerKey:selectedKey, currentBid, currentBidder });
+    }
+
+    // ✅ Mark sold
+    function markSold() {
+      if (!selectedKey || !currentBidder) return alert('Select player and owner');
+      const ref = db.ref('owners/' + currentBidder + '/wallet');
+      ref.transaction(wallet => wallet - currentBid, async (err, committed) => {
+        if (!committed) return alert('Not enough balance');
+        const p = players[selectedKey];
+        const data = { ...p, team: currentBidder, currentBid, status:'sold' };
+        await db.ref('players/' + selectedKey).update(data);
+        await db.ref('soldPlayers').push(data);
+        alert(`${p.name} sold to ${currentBidder} for ₹${currentBid.toLocaleString()}`);
+        currentBid = 0;
+        updateBid();
+        document.getElementById('currentBidder').innerText = '---';
+      });
+    }
+
+    // 🪄 Update bid
+    function updateBid() {
+      document.getElementById('currentBid').innerText = '₹' + currentBid.toLocaleString();
+    }
+
+    // 🧾 Sold history
+    db.ref('soldPlayers').on('value', s => {
+      const el = document.getElementById('soldList');
+      el.innerHTML = '';
+      if (!s.exists()) return;
+      Object.values(s.val()).reverse().forEach(p => {
+        const d = document.createElement('div');
+        d.className = 'sold';
+        d.innerHTML = `<strong>${p.name}</strong> — ₹${p.currentBid.toLocaleString()} | ${p.team}`;
+        el.appendChild(d);
+      });
+    });
+
+    // 🚀 Init
+    initOwners();
+    loadOwnersGrid();
+  </script>
 </body>
 </html>
