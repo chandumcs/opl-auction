@@ -8,15 +8,12 @@
   :root {
     --navy: #002d62;
     --orange: #ff9800;
-    --bg1: #001a3b;
-    --bg2: #003b6f;
+    --bg: #f2f5fb;
   }
   body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(-45deg, var(--bg1), var(--bg2), var(--navy), var(--orange));
-    background-size: 400% 400%;
-    animation: gradientMove 10s ease infinite;
+    background: var(--bg);
     color: #fff;
     display: flex;
     justify-content: center;
@@ -24,91 +21,68 @@
     height: 100vh;
     overflow: hidden;
   }
-  @keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  /* Splash screen */
   .logo-screen, .role-screen {
     position: absolute;
     text-align: center;
     transition: opacity 1s ease;
   }
-
   .logo-screen img {
-    width: 180px;
+    width: 150px;
     animation: bounce 1.8s ease-in-out infinite;
   }
-
   @keyframes bounce {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
-
   .logo-screen h1 {
-    font-size: 28px;
-    margin-top: 18px;
+    font-size: 26px;
+    margin-top: 20px;
     color: var(--orange);
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    animation: fadeIn 2s ease-in-out;
+    animation: fadeIn 1.5s ease-in-out;
   }
-
   @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
   }
-
-  /* Role selection */
   .role-screen {
     opacity: 0;
     transform: translateY(20px);
     transition: all 1s ease;
   }
-
   .role-screen.show {
     opacity: 1;
     transform: translateY(0);
   }
-
   .role-screen h2 {
-    color: var(--orange);
-    font-size: 30px;
-    margin-bottom: 25px;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    color: var(--navy);
+    font-size: 28px;
+    margin-bottom: 20px;
   }
-
   .buttons {
     display: flex;
     justify-content: center;
-    gap: 25px;
+    gap: 20px;
   }
-
   .btn {
     background: var(--orange);
     color: #fff;
     border: none;
-    padding: 14px 32px;
-    border-radius: 10px;
+    padding: 14px 28px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 18px;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     transition: transform 0.2s ease, background 0.3s;
   }
-
   .btn:hover {
-    transform: translateY(-4px);
-    background: #ffb13b;
+    transform: translateY(-3px);
+    background: #ffab2e;
   }
-
   footer {
     position: absolute;
     bottom: 10px;
-    color: #fff;
+    color: var(--navy);
     font-size: 13px;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
   }
 </style>
 </head>
@@ -132,7 +106,7 @@
 <footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
 <script>
-  // After 3 seconds, fade out logo screen and show role selection
+  // Show the logo for 3 seconds, then switch
   setTimeout(() => {
     document.getElementById("logoScreen").style.opacity = "0";
     document.getElementById("roleScreen").classList.add("show");
