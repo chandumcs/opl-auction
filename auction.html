@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>OPL 2025 — Admin Auction Console</title>
+<title>🏏 OPL 2025 — Admin Auction Console</title>
 <style>
   :root{--nav:#002d62;--accent:#ff9800;--blue:#007bff;--bg:#eef3fa}
   body{font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);margin:0}
@@ -92,7 +92,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
@@ -106,6 +106,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const liveRef = ref(db, "/live");
 
 let players = [];
 let soldPlayers = {};
@@ -153,7 +154,6 @@ function renderOwners() {
     div.onclick = () => (selectedOwner = name, topBidderEl.textContent = "Top Bidder: " + name);
     ownersContainer.appendChild(div);
 
-    // populate filter dropdown once
     if (![...ownerFilter.options].some(o => o.value === name)) {
       const opt = document.createElement("option");
       opt.value = name;
@@ -163,6 +163,11 @@ function renderOwners() {
   });
 }
 renderOwners();
+
+// Live update helper
+async function updateLive(playerObj) {
+  await update(liveRef, playerObj);
+}
 
 // Search Suggestion
 function showSuggestions(value) {
@@ -194,6 +199,15 @@ function selectPlayer(p) {
   currentBidEl.textContent = `₹${currentBid.toLocaleString()}`;
   topBidderEl.textContent = "Top Bidder: ---";
   selectedOwner = null;
+
+  updateLive({
+    name: p.name,
+    type: p.type,
+    basePrice: p.basePrice,
+    location: p.location,
+    currentBid: currentBid,
+    topBidder: "---"
+  });
 }
 
 // Bid Buttons
@@ -203,10 +217,15 @@ document.getElementById("btnAdd").onclick = () => {
   const val = parseInt(document.getElementById("customAmount").value);
   if (val > 0) increaseBid(val);
 };
+
 function increaseBid(amount) {
   if (!currentPlayer) return alert("Select player first!");
   currentBid += amount;
   currentBidEl.textContent = `₹${currentBid.toLocaleString()}`;
+  updateLive({
+    currentBid: currentBid,
+    topBidder: selectedOwner || "---"
+  });
 }
 
 // Mark Sold
@@ -225,7 +244,19 @@ document.getElementById("markSold").onclick = async () => {
     owner: selectedOwner,
     timestamp: new Date().toISOString()
   });
+
   alert(`${currentPlayer.name} sold to ${selectedOwner} for ₹${currentBid.toLocaleString()}`);
+
+  // Reset live data
+  await updateLive({
+    name: "Waiting for next player...",
+    type: "---",
+    basePrice: "---",
+    location: "---",
+    currentBid: 0,
+    topBidder: "---"
+  });
+
   resetUI();
 };
 
