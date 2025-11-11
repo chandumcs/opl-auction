@@ -3,111 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏆 OPL 2025 — Admin Auction Console</title>
+<title>🏏 OPL 2025 — Admin Auction Console</title>
 <style>
 body {
   font-family: "Segoe UI", sans-serif;
-  background: #f3f6fa;
+  background: #eef3fa;
   margin: 0;
-  color: #002244;
+  padding: 0;
 }
 header {
-  background: #052f57;
+  background: #002d62;
   color: white;
-  padding: 15px;
   text-align: center;
+  padding: 15px;
   font-size: 20px;
   font-weight: 600;
-  letter-spacing: 1px;
 }
 .container {
-  max-width: 950px;
   background: white;
-  margin: 30px auto;
+  max-width: 900px;
+  margin: 25px auto;
   border-radius: 15px;
   padding: 25px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
   text-align: center;
 }
-.details {
-  background: #052f57;
-  color: white;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 20px;
+.player-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #002d62;
 }
 .price {
-  font-size: 38px;
+  font-size: 42px;
   color: orange;
-  margin: 10px;
-  font-weight: bold;
+  margin: 15px 0;
 }
-input[type="text"] {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  text-align: center;
-  font-size: 15px;
-  width: 250px;
-}
-button {
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  padding: 10px 15px;
-  border-radius: 8px;
-  margin: 5px;
-  transition: 0.2s;
-}
-.btn-blue { background: #007bff; color: white; }
-.btn-blue:hover { background: #005ec4; }
-.btn-green { background: #16a34a; color: white; }
-.btn-gray { background: #6c757d; color: white; }
-.owner-box {
+.owner-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 12px;
   margin-top: 20px;
 }
 .owner {
-  background: orange;
+  background: #ff9800;
   color: white;
-  font-weight: 600;
   border-radius: 8px;
   padding: 10px;
-  cursor: pointer;
-  transition: 0.3s;
 }
-.owner:hover {
-  transform: scale(1.05);
-  background: #ff7b00;
-}
-.remaining {
-  font-size: 13px;
-  opacity: 0.9;
-}
-footer {
-  background: #052f57;
-  color: white;
-  text-align: center;
-  padding: 15px;
-  margin-top: 30px;
-}
+.btn-blue { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin: 5px; cursor: pointer; }
+.btn-blue:hover { background: #005ec4; }
+.btn-green { background: #008000; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin: 5px; cursor: pointer; }
+.btn-gray { background: #555; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin: 5px; cursor: pointer; }
 
-/* Dropdown suggestions */
+/* Search Box + Dropdown */
+.player-search-wrapper {
+  position: relative;
+  width: 260px;
+  margin: 0 auto 15px;
+}
 .suggestions {
   position: absolute;
-  background: white;
+  top: 45px;
+  left: 0;
+  width: 100%;
+  background: #fff;
   border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 250px;
-  margin: auto;
-  z-index: 10;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  z-index: 9999;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
 }
 .suggestions div {
-  padding: 8px;
+  padding: 8px 10px;
   cursor: pointer;
+  font-size: 15px;
+  border-bottom: 1px solid #eee;
 }
+.suggestions div:last-child { border-bottom: none; }
 .suggestions div:hover {
   background: #007bff;
   color: white;
@@ -115,44 +89,45 @@ footer {
 </style>
 </head>
 <body>
-<header>🚀 OPL 2025 — Admin Auction Console</header>
+<header>🏏 OPL 2025 — Admin Auction Console</header>
 
 <div class="container">
-  <div class="details">
-    <h3 id="playerName">No Player Selected</h3>
-    <p id="playerType">---</p>
+  <div id="playerDetails">
+    <div class="player-name" id="playerName">No Player Selected</div>
+    <div id="playerType">---</div>
     <div class="price" id="currentBid">₹0</div>
-    <p>Top Bidder: <span id="topBidder">---</span></p>
+    <div id="topBidder">Top Bidder: ---</div>
   </div>
 
-  <div style="position:relative; display:inline-block;">
-    <input type="text" id="searchPlayer" placeholder="Search Player Name..." oninput="showSuggestions(this.value)">
-    <div id="suggestions" class="suggestions" style="display:none;"></div>
+  <div class="player-search-wrapper">
+    <input type="text" id="searchPlayer" placeholder="Search Player Name..." oninput="showSuggestions(this.value)" autocomplete="off">
+    <div id="suggestions" class="suggestions"></div>
   </div>
   <button class="btn-blue" onclick="searchPlayer()">Search</button>
 
   <div style="margin-top:10px;">
     <button class="btn-blue" onclick="increaseBid(20000)">+ ₹20K</button>
     <button class="btn-blue" onclick="increaseBid(50000)">+ ₹50K</button>
-    <input type="text" id="customBid" placeholder="Custom ₹" oninput="validateNumber(this)">
+    <input type="number" id="customAmount" placeholder="Custom ₹" style="padding:8px;border-radius:8px;width:100px;">
     <button class="btn-blue" onclick="addCustom()">Add</button>
   </div>
 
-  <h3 style="margin-top:25px;">Owners</h3>
-  <div class="owner-box" id="ownersContainer"></div>
+  <h3>Owners</h3>
+  <div id="owners" class="owner-grid"></div>
 
   <div style="margin-top:15px;">
     <button class="btn-green" onclick="markSold()">✅ Mark Sold</button>
-    <button class="btn-gray" onclick="resetBid()">🔁 Reset</button>
+    <button class="btn-gray" onclick="resetBid()">⟳ Reset</button>
   </div>
 </div>
 
-<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
+<footer style="background:#002d62;color:white;text-align:center;padding:10px;">
+  © 2025 Olive Crypto Systems Pvt. Ltd.
+</footer>
 
-<!-- Firebase + Logic -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
@@ -163,66 +138,55 @@ const firebaseConfig = {
   messagingSenderId: "282929654033",
   appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Owners
-const owners = {
-  "Sharath": 6450000000,
-  "Sarath Chava": 7700000000,
-  "Teja": 7500000000,
-  "Vamsi": 6950000000,
-  "Rajan": 6200000000,
-  "Shabeer": 7000000000,
-  "Raviraj": 7200000000,
-  "Mahinder": 6600000000
-};
-
-// Player List
+// --- Sample players loaded from your Excel ---
 const players = [
-  { name:"Avinash Komarabathini", type:"B" },
-  { name:"Amarthya Porandla", type:"A" },
-  { name:"Ajith Kumar M", type:"A" },
-  { name:"Dinesh Kumar Peddi", type:"B" },
-  { name:"Brahmaiah Divve", type:"A" },
-  { name:"Chandra Sekhar Mallela", type:"A" },
-  { name:"Raghu Yalakapati", type:"B" },
+  { name: "Chandra Sekhar Mallela", type: "A", category: "All Rounder" },
+  { name: "Avinash Komarabathini", type: "B", category: "All Rounder" },
+  { name: "Sai Manikanta Bondada", type: "B", category: "Batsman" },
+  { name: "Dileep Manohar Reddy", type: "B", category: "Batsman" },
+  { name: "Brahmaiah Divve", type: "A", category: "All Rounder" }
 ];
 
-let selectedPlayer = null;
+let currentPlayer = null;
 let currentBid = 0;
-let currentOwner = null;
+let topBidder = "---";
+let owners = {
+  "Sharath": 64.5,
+  "Sarath Chava": 77,
+  "Teja": 75,
+  "Vamsi": 69.5,
+  "Rajan": 62,
+  "Shabeer": 70,
+  "Raviraj": 72,
+  "Mahinder": 66
+};
 
-// Populate Owners
-const ownersContainer = document.getElementById("ownersContainer");
-Object.entries(owners).forEach(([name,balance])=>{
-  const div=document.createElement("div");
-  div.className="owner";
-  div.innerHTML=`${name}<div class='remaining'>₹${(balance/10000000).toFixed(2)} Cr</div>`;
-  div.onclick=()=>selectOwner(name);
-  ownersContainer.appendChild(div);
-});
-
-function updateOwnersDisplay(){
-  ownersContainer.innerHTML="";
-  Object.entries(owners).forEach(([name,balance])=>{
-    const div=document.createElement("div");
+// Display owners
+function renderOwners(){
+  const c = document.getElementById("owners");
+  c.innerHTML="";
+  Object.entries(owners).forEach(([name,bal])=>{
+    const div = document.createElement("div");
     div.className="owner";
-    div.innerHTML=`${name}<div class='remaining'>₹${(balance/10000000).toFixed(2)} Cr</div>`;
-    div.onclick=()=>selectOwner(name);
-    ownersContainer.appendChild(div);
+    div.innerHTML=`<b>${name}</b><br>₹${bal.toFixed(2)} Cr`;
+    div.onclick=()=>topBidder=name;
+    c.appendChild(div);
   });
 }
+renderOwners();
 
-// ✅ Autocomplete Suggestion Logic
 function showSuggestions(value){
   const suggestionBox=document.getElementById("suggestions");
-  if(!value){suggestionBox.style.display="none";return;}
-
-  const matches=players.filter(p=>p.name.toLowerCase().includes(value.toLowerCase()));
-  if(matches.length===0){suggestionBox.style.display="none";return;}
-
   suggestionBox.innerHTML="";
+  if(!value){ suggestionBox.style.display="none"; return; }
+
+  const matches = players.filter(p=>p.name.toLowerCase().includes(value.toLowerCase()));
+  if(matches.length===0){ suggestionBox.style.display="none"; return; }
+
   matches.forEach(p=>{
     const div=document.createElement("div");
     div.textContent=p.name;
@@ -236,74 +200,59 @@ function showSuggestions(value){
   suggestionBox.style.display="block";
 }
 
-// Select a player from suggestion
-function selectPlayer(player){
-  selectedPlayer=player;
-  document.getElementById("playerName").innerText=player.name;
-  document.getElementById("playerType").innerText=`Type: ${player.type}`;
-  currentBid = player.type==="A"?20000000:5000000;
-  document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
+document.addEventListener("click",(e)=>{
+  if(!e.target.closest(".player-search-wrapper"))
+    document.getElementById("suggestions").style.display="none";
+});
+
+function selectPlayer(p){
+  currentPlayer=p;
+  currentBid = (p.type==="A") ? 20000000 : 5000000;
+  document.getElementById("playerName").textContent=p.name;
+  document.getElementById("playerType").textContent=`Type: ${p.type} | Category: ${p.category}`;
+  document.getElementById("currentBid").textContent=`₹${currentBid.toLocaleString()}`;
 }
 
-// Manual Search
-function searchPlayer(){
-  const term=document.getElementById("searchPlayer").value.trim().toLowerCase();
-  const player=players.find(p=>p.name.toLowerCase().includes(term));
-  if(player) selectPlayer(player);
-  else alert("Player not found!");
+function increaseBid(amt){
+  if(!currentPlayer) return alert("Select a player first!");
+  currentBid += amt;
+  document.getElementById("currentBid").textContent=`₹${currentBid.toLocaleString()}`;
 }
 
-function increaseBid(amount){
-  if(!selectedPlayer){alert("Select player first!");return;}
-  currentBid+=amount;
-  document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
-}
-
-function validateNumber(input){input.value=input.value.replace(/[^0-9]/g,'');}
 function addCustom(){
-  const custom=parseInt(document.getElementById("customBid").value||"0");
-  if(custom>0 && selectedPlayer){
-    currentBid+=custom;
-    document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
-    document.getElementById("customBid").value="";
-  }
-}
-
-function selectOwner(name){
-  currentOwner=name;
-  document.getElementById("topBidder").innerText=name;
-}
-
-function markSold(){
-  if(!selectedPlayer || !currentOwner){alert("Select player & owner first!");return;}
-  if(owners[currentOwner]<currentBid){alert("Insufficient balance!");return;}
-
-  owners[currentOwner]-=currentBid;
-  updateOwnersDisplay();
-
-  const soldData={
-    name:selectedPlayer.name,
-    type:selectedPlayer.type,
-    soldPrice:currentBid,
-    owner:currentOwner,
-    timestamp:Date.now()
-  };
-
-  const auctionRef=ref(db,"auction/current");
-  set(auctionRef,{currentPlayer:soldData,owners:owners}).then(()=>{
-    alert(`${selectedPlayer.name} sold to ${currentOwner} for ₹${currentBid.toLocaleString()}`);
-    resetBid();
-  });
+  const val=parseInt(document.getElementById("customAmount").value);
+  if(val>0){ increaseBid(val); }
 }
 
 function resetBid(){
-  selectedPlayer=null;
-  currentOwner=null;
+  currentPlayer=null;
   currentBid=0;
-  document.getElementById("playerName").innerText="No Player Selected";
-  document.getElementById("playerType").innerText="---";
-  document.getElementById("currentBid").innerText="₹0";
-  document.getElementById("topBidder").innerText="---";
+  topBidder="---";
+  document.getElementById("playerName").textContent="No Player Selected";
+  document.getElementById("playerType").textContent="---";
+  document.getElementById("currentBid").textContent="₹0";
+  document.getElementById("topBidder").textContent="Top Bidder: ---";
+}
+
+function markSold(){
+  if(!currentPlayer || topBidder==="---") return alert("Select player and bidder!");
+  const ownerBal = owners[topBidder];
+  const newBal = ownerBal - (currentBid/10000000);
+  if(newBal<0) return alert("Not enough balance!");
+  owners[topBidder] = newBal;
+
+  const soldData={
+    name: currentPlayer.name,
+    type: currentPlayer.type,
+    category: currentPlayer.category,
+    soldPrice: currentBid,
+    owner: topBidder
+  };
+  set(ref(db, "auction/current"), { currentPlayer: soldData, owners });
+  set(ref(db, "auction/history/"+currentPlayer.name.replace(/\./g,"_")), soldData);
+  renderOwners();
+  alert(`${currentPlayer.name} sold to ${topBidder} for ₹${currentBid.toLocaleString()}`);
+  resetBid();
 }
 </script>
 </body>
