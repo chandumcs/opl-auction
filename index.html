@@ -5,84 +5,79 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🏏 Olive Premier League 2025</title>
 <style>
-  :root {
-    --navy: #002d62;
-    --orange: #ff9800;
-    --bg: #f2f5fb;
-  }
   body {
     margin: 0;
-    font-family: 'Poppins', sans-serif;
-    background: var(--bg);
-    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: white;
+    color: #002d62;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    overflow: hidden;
+    flex-direction: column;
   }
+
   .logo-screen, .role-screen {
     position: absolute;
     text-align: center;
     transition: opacity 1s ease;
   }
+
   .logo-screen img {
-    width: 150px;
-    animation: bounce 1.8s ease-in-out infinite;
+    width: 160px;
   }
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
+
   .logo-screen h1 {
     font-size: 26px;
-    margin-top: 20px;
-    color: var(--orange);
-    animation: fadeIn 1.5s ease-in-out;
+    margin-top: 18px;
+    color: #ff9800;
   }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
+
   .role-screen {
     opacity: 0;
     transform: translateY(20px);
     transition: all 1s ease;
   }
+
   .role-screen.show {
     opacity: 1;
     transform: translateY(0);
   }
+
   .role-screen h2 {
-    color: var(--navy);
-    font-size: 28px;
-    margin-bottom: 20px;
+    font-size: 26px;
+    color: #002d62;
+    margin-bottom: 25px;
   }
+
   .buttons {
     display: flex;
     justify-content: center;
     gap: 20px;
   }
+
   .btn {
-    background: var(--orange);
+    background: #ff9800;
     color: #fff;
     border: none;
-    padding: 14px 28px;
+    padding: 12px 28px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 18px;
     font-weight: 600;
-    transition: transform 0.2s ease, background 0.3s;
+    transition: background 0.3s, transform 0.2s;
   }
+
   .btn:hover {
-    transform: translateY(-3px);
-    background: #ffab2e;
+    background: #ffb84d;
+    transform: translateY(-2px);
   }
+
   footer {
     position: absolute;
     bottom: 10px;
-    color: var(--navy);
     font-size: 13px;
+    color: #555;
   }
 </style>
 </head>
@@ -106,7 +101,7 @@
 <footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
 <script>
-  // Show the logo for 3 seconds, then switch
+  // After 3 seconds, fade to role selection
   setTimeout(() => {
     document.getElementById("logoScreen").style.opacity = "0";
     document.getElementById("roleScreen").classList.add("show");
