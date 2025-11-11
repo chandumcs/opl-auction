@@ -19,14 +19,14 @@
     overflow: hidden;
   }
 
-  .logo-screen, .role-screen {
+  .logo-screen, .role-screen, .pin-screen {
     position: absolute;
     text-align: center;
     transition: opacity 1s ease;
   }
 
   .logo-screen img {
-    width: 160px;
+    width: 200px;
     height: auto;
   }
 
@@ -77,6 +77,44 @@
     transform: translateY(-2px);
   }
 
+  .pin-screen {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.95);
+    transition: all 0.4s ease;
+  }
+
+  .pin-screen.show {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+  }
+
+  .pin-box {
+    background: #f7f9fc;
+    border-radius: 10px;
+    padding: 25px 35px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: inline-block;
+  }
+
+  input[type="password"] {
+    padding: 10px;
+    font-size: 18px;
+    width: 200px;
+    text-align: center;
+    border: 2px solid #002d62;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    outline: none;
+  }
+
+  .error {
+    color: red;
+    margin-top: 5px;
+    font-size: 14px;
+  }
+
   footer {
     position: absolute;
     bottom: 10px;
@@ -99,8 +137,7 @@
 
 <!-- Splash Logo Screen -->
 <div class="logo-screen" id="logoScreen">
-  <!-- ✅ Correct Path for GitHub Pages -->
-  <img src="/opl-auction/assets/logo.png" alt="Olive Logo" />
+  <img src="https://chandumcs.github.io/opl-auction/assets/logo.png" alt="Olive Logo" />
   <h1>Olive Premier League 2025</h1>
 </div>
 
@@ -108,19 +145,50 @@
 <div class="role-screen" id="roleScreen">
   <h2>Welcome to OPL 2025</h2>
   <div class="buttons">
-    <button class="btn" onclick="window.location.href='auction.html'">Admin</button>
+    <button class="btn" onclick="showPinScreen()">Admin</button>
     <button class="btn" onclick="window.location.href='live.html'">User (Live Viewer)</button>
+  </div>
+</div>
+
+<!-- PIN Entry Screen -->
+<div class="pin-screen" id="pinScreen">
+  <div class="pin-box">
+    <h3>🔐 Enter Admin PIN</h3>
+    <input type="password" id="pinInput" placeholder="Enter PIN" maxlength="4" />
+    <br>
+    <button class="btn" onclick="verifyPin()">Submit</button>
+    <div id="errorMsg" class="error"></div>
   </div>
 </div>
 
 <footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
 <script>
-  // Delay to transition from splash to selection
+  // Transition from splash to role select
   setTimeout(() => {
     document.getElementById("logoScreen").style.opacity = "0";
     document.getElementById("roleScreen").classList.add("show");
   }, 3000);
+
+  function showPinScreen() {
+    document.getElementById("roleScreen").style.opacity = "0";
+    setTimeout(() => {
+      document.getElementById("pinScreen").classList.add("show");
+    }, 400);
+  }
+
+  function verifyPin() {
+    const enteredPin = document.getElementById("pinInput").value.trim();
+    const correctPin = "7287";
+    const errorMsg = document.getElementById("errorMsg");
+
+    if (enteredPin === correctPin) {
+      errorMsg.textContent = "";
+      window.location.href = "auction.html";
+    } else {
+      errorMsg.textContent = "❌ Incorrect PIN. Please try again.";
+    }
+  }
 </script>
 
 </body>
