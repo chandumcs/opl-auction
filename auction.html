@@ -8,8 +8,8 @@
   :root{--nav:#002d62;--accent:#ff9800;--blue:#007bff;--bg:#eef3fa}
   body{font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);margin:0}
   header{background:var(--nav);color:#fff;padding:14px 0;text-align:center;font-weight:700}
-  .container{max-width:980px;margin:26px auto;padding:28px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(2,20,56,.08)}
-  h3{margin:0 0 4px}
+  .container{max-width:1000px;margin:26px auto;padding:28px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(2,20,56,.08)}
+  h3{margin:0 0 8px}
   .muted{color:#475569}
   .price{font-size:40px;color:orange;font-weight:700;margin:8px 0}
   .player-search-wrapper{position:relative;width:360px;margin:18px auto}
@@ -24,8 +24,13 @@
   .btn-gray{background:#6b7280;color:#fff}
   .owner-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:20px}
   .owner{background:var(--accent);color:#fff;border-radius:10px;padding:12px 10px;text-align:center;cursor:pointer}
+  table{width:100%;border-collapse:collapse;margin-top:25px}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+  th{background:#002d62;color:#fff}
+  tr:nth-child(even){background:#f9f9f9}
+  .filter-section{display:flex;justify-content:space-between;align-items:center;margin-top:30px}
+  select{padding:8px 10px;border-radius:6px;border:1px solid #cfd8e3}
   footer{background:var(--nav);color:#fff;text-align:center;padding:12px;margin-top:26px}
-  @media (max-width:600px){.player-search-wrapper{width:92%}}
 </style>
 </head>
 <body>
@@ -56,204 +61,229 @@
     <button class="btn btn-green" id="markSold">✅ Mark Sold</button>
     <button class="btn btn-gray" id="reset">⟳ Reset</button>
   </div>
+
+  <!-- SOLD PLAYERS SECTION -->
+  <div class="filter-section">
+    <h3>Sold Players List</h3>
+    <div>
+      <label>Filter by Owner: </label>
+      <select id="ownerFilter">
+        <option value="All">All Owners</option>
+      </select>
+      <button class="btn btn-blue" id="exportCSV">⬇ Export CSV</button>
+    </div>
+  </div>
+  <table id="soldTable">
+    <thead>
+      <tr>
+        <th>Player Name</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Location</th>
+        <th>Sold Price (₹)</th>
+        <th>Owner</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 
 <footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, get, set, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  // <-- your firebase config (same as you provided)
-  const firebaseConfig = {
-    apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
-    authDomain: "opl-2025-season-2.firebaseapp.com",
-    databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "opl-2025-season-2",
-    storageBucket: "opl-2025-season-2.firebasestorage.app",
-    messagingSenderId: "282929654033",
-    appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+  authDomain: "opl-2025-season-2.firebaseapp.com",
+  databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "opl-2025-season-2",
+  storageBucket: "opl-2025-season-2.firebasestorage.app",
+  messagingSenderId: "282929654033",
+  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  // state
-  let players = [];          // array of player objects
-  let currentPlayer = null;  // selected player object
-  let currentBid = 0;
-  let selectedOwner = null;
+let players = [];
+let soldPlayers = {};
+let currentPlayer = null;
+let currentBid = 0;
+let selectedOwner = null;
 
-  // Owner balances (in crores) - keep in memory and render
-  let owners = {
-    Sharath: 64.5,
-    "Sarath Chava": 77,
-    Teja: 75,
-    Vamsi: 69.5,
-    Rajan: 62,
-    Shabeer: 70,
-    Raviraj: 72,
-    Mahinder: 66
-  };
+let owners = {
+  Sharath: 64.5,
+  "Sarath Chava": 77,
+  Teja: 75,
+  Vamsi: 69.5,
+  Rajan: 62,
+  Shabeer: 70,
+  Raviraj: 72,
+  Mahinder: 66,
+};
 
-  // ui refs
-  const searchInput = document.getElementById('searchPlayer');
-  const suggestions = document.getElementById('suggestions');
-  const playerNameEl = document.getElementById('playerName');
-  const playerMetaEl = document.getElementById('playerMeta');
-  const currentBidEl = document.getElementById('currentBid');
-  const topBidderEl = document.getElementById('topBidder');
-  const ownersContainer = document.getElementById('owners');
+// DOM Elements
+const searchInput = document.getElementById("searchPlayer");
+const suggestions = document.getElementById("suggestions");
+const playerNameEl = document.getElementById("playerName");
+const playerMetaEl = document.getElementById("playerMeta");
+const currentBidEl = document.getElementById("currentBid");
+const topBidderEl = document.getElementById("topBidder");
+const ownersContainer = document.getElementById("owners");
+const soldTableBody = document.querySelector("#soldTable tbody");
+const ownerFilter = document.getElementById("ownerFilter");
 
-  // load players from /players
-  async function loadPlayers(){
-    try {
-      const snap = await get(ref(db, '/players'));
-      if(!snap.exists()){
-        console.warn('no players node found in firebase');
-        return;
-      }
-      const data = snap.val();
-      players = Object.values(data).filter(p => p && p.name);
-      console.log('Loaded players:', players.length);
-    } catch(err){
-      console.error('Error loading players', err);
+// Load players
+get(ref(db, "/players")).then((snapshot) => {
+  if (snapshot.exists()) {
+    players = Object.values(snapshot.val());
+    console.log("Loaded players:", players.length);
+  }
+});
+
+// Render Owners
+function renderOwners() {
+  ownersContainer.innerHTML = "";
+  Object.entries(owners).forEach(([name, bal]) => {
+    const div = document.createElement("div");
+    div.className = "owner";
+    div.innerHTML = `<b>${name}</b><br>₹${bal.toFixed(2)} Cr`;
+    div.onclick = () => (selectedOwner = name, topBidderEl.textContent = "Top Bidder: " + name);
+    ownersContainer.appendChild(div);
+
+    // populate filter dropdown once
+    if (![...ownerFilter.options].some(o => o.value === name)) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      ownerFilter.appendChild(opt);
     }
-  }
+  });
+}
+renderOwners();
 
-  // render owner buttons
-  function renderOwners(){
-    ownersContainer.innerHTML = '';
-    Object.entries(owners).forEach(([name, cr])=>{
-      const d = document.createElement('div');
-      d.className = 'owner';
-      d.innerHTML = `<div style="font-weight:700">${name}</div><div style="font-size:13px;margin-top:6px">₹${(cr*100).toFixed(2)} L (${cr.toFixed(2)} Cr)</div>`;
-      d.onclick = ()=> {
-        selectedOwner = name;
-        topBidderEl.textContent = `Top Bidder: ${name}`;
-      };
-      ownersContainer.appendChild(d);
-    });
-  }
+// Search Suggestion
+function showSuggestions(value) {
+  const search = value.trim().toLowerCase();
+  suggestions.innerHTML = "";
+  if (!search) return (suggestions.style.display = "none");
 
-  // choose player (when selected from suggestions)
-  function selectPlayer(p){
-    currentPlayer = p;
-    // base price rule: type A -> 2 Cr, type B -> 0.5 Cr (50 L)
-    const base = p.type === 'A' ? 20000000 : 5000000;
-    currentBid = base;
-    playerNameEl.textContent = p.name;
-    playerMetaEl.textContent = `Type: ${p.type} | ${p.basePrice} | ${p.location}`;
-    currentBidEl.textContent = `₹${currentBid.toLocaleString()}`;
-    topBidderEl.textContent = 'Top Bidder: ---';
-    selectedOwner = null;
-  }
+  const matches = players.filter(p => p.name && p.name.toLowerCase().includes(search)).slice(0, 40);
+  matches.forEach(p => {
+    const div = document.createElement("div");
+    div.textContent = `${p.name} (${p.type})`;
+    div.onclick = () => {
+      searchInput.value = p.name;
+      suggestions.style.display = "none";
+      selectPlayer(p);
+    };
+    suggestions.appendChild(div);
+  });
+  suggestions.style.display = "block";
+}
+searchInput.addEventListener("input", e => showSuggestions(e.target.value));
 
-  // suggestions: filter players by name substring (case-insensitive)
-  function showSuggestions(value){
-    const q = (value || '').trim().toLowerCase();
-    suggestions.innerHTML = '';
-    if(!q){ suggestions.style.display = 'none'; return; }
-    // return up to 40 matches to keep it snappy
-    const matches = players.filter(p => p.name && p.name.toLowerCase().includes(q)).slice(0,40);
-    if(matches.length===0){
-      suggestions.innerHTML = `<div>No players found</div>`;
-      suggestions.style.display = 'block';
-      return;
-    }
-    matches.forEach(p=>{
-      const div = document.createElement('div');
-      div.textContent = `${p.name} — ${p.type} — ${p.basePrice || ''}`;
-      div.onclick = ()=>{
-        searchInput.value = p.name;
-        suggestions.style.display = 'none';
-        selectPlayer(p);
-      };
-      suggestions.appendChild(div);
-    });
-    suggestions.style.display = 'block';
-  }
+// Select Player
+function selectPlayer(p) {
+  currentPlayer = p;
+  currentBid = p.type === "A" ? 20000000 : 5000000;
+  playerNameEl.textContent = p.name;
+  playerMetaEl.textContent = `Type: ${p.type} | ${p.basePrice} | ${p.location}`;
+  currentBidEl.textContent = `₹${currentBid.toLocaleString()}`;
+  topBidderEl.textContent = "Top Bidder: ---";
+  selectedOwner = null;
+}
 
-  // increase bid helpers
-  function increaseBid(amount){
-    if(!currentPlayer){ alert('Select a player first'); return; }
-    currentBid += amount;
-    currentBidEl.textContent = `₹${currentBid.toLocaleString()}`;
-  }
-  function addCustom(){
-    const v = Number(document.getElementById('customAmount').value);
-    if(!currentPlayer){ alert('Select player first'); return; }
-    if(!v || v<=0){ alert('Enter numeric amount'); return; }
-    increaseBid(v);
-    document.getElementById('customAmount').value = '';
-  }
+// Bid Buttons
+document.getElementById("btn20").onclick = () => increaseBid(20000);
+document.getElementById("btn50").onclick = () => increaseBid(50000);
+document.getElementById("btnAdd").onclick = () => {
+  const val = parseInt(document.getElementById("customAmount").value);
+  if (val > 0) increaseBid(val);
+};
+function increaseBid(amount) {
+  if (!currentPlayer) return alert("Select player first!");
+  currentBid += amount;
+  currentBidEl.textContent = `₹${currentBid.toLocaleString()}`;
+}
 
-  // mark sold: deduct owner funds and push sold record
-  async function markSold(){
-    if(!currentPlayer){ alert('Select player first'); return; }
-    if(!selectedOwner){ alert('Select an owner (click an owner card)'); return; }
-    // Deduction logic: currentBid is in rupees. Owner balances stored in crores.
-    // Convert owner crores -> rupees: owners[selectedOwner]*10000000? No: 1 Cr = 10,000,000 rupees
-    const ownerRupees = owners[selectedOwner] * 10000000;
-    if(currentBid > ownerRupees){ alert('Not enough balance'); return; }
-    // deduct
-    const newOwnerCr = (ownerRupees - currentBid) / 10000000;
-    owners[selectedOwner] = Number(newOwnerCr.toFixed(2));
-    renderOwners();
-    // write sold record
-    const soldKey = currentPlayer.name.replace(/\s+/g,'_');
-    await set(ref(db, `sold/${soldKey}`), {
-      ...currentPlayer,
-      soldPrice: currentBid,
-      owner: selectedOwner,
-      timestamp: new Date().toISOString()
-    });
-    alert(`${currentPlayer.name} sold to ${selectedOwner} for ₹${currentBid.toLocaleString()}`);
-    // reset
-    currentPlayer = null;
-    currentBid = 0;
-    selectedOwner = null;
-    playerNameEl.textContent = 'No Player Selected';
-    playerMetaEl.textContent = '---';
-    currentBidEl.textContent = '₹0';
-    topBidderEl.textContent = 'Top Bidder: ---';
-  }
+// Mark Sold
+document.getElementById("markSold").onclick = async () => {
+  if (!currentPlayer || !selectedOwner) return alert("Select player & owner first!");
+  const ownerBal = owners[selectedOwner];
+  const deduction = currentBid / 10000000;
+  if (ownerBal < deduction) return alert("Not enough balance!");
 
-  // reset UI
-  function resetUI(){
-    currentPlayer = null;
-    currentBid = 0;
-    selectedOwner = null;
-    playerNameEl.textContent = 'No Player Selected';
-    playerMetaEl.textContent = '---';
-    currentBidEl.textContent = '₹0';
-    topBidderEl.textContent = 'Top Bidder: ---';
-    searchInput.value = '';
-    suggestions.style.display = 'none';
-  }
+  owners[selectedOwner] = ownerBal - deduction;
+  renderOwners();
 
-  // wire UI events AFTER loading players
-  (async function init(){
-    await loadPlayers();
-    renderOwners();
-    console.log('Loaded players:', players.length);
+  await set(ref(db, `sold/${currentPlayer.name.replace(/\s+/g, "_")}`), {
+    ...currentPlayer,
+    soldPrice: currentBid,
+    owner: selectedOwner,
+    timestamp: new Date().toISOString()
+  });
+  alert(`${currentPlayer.name} sold to ${selectedOwner} for ₹${currentBid.toLocaleString()}`);
+  resetUI();
+};
 
-    // wire events (attached inside module scope so functions are found)
-    searchInput.addEventListener('input', (e)=> showSuggestions(e.target.value));
-    document.getElementById('btn20').addEventListener('click', ()=> increaseBid(20000));
-    document.getElementById('btn50').addEventListener('click', ()=> increaseBid(50000));
-    document.getElementById('btnAdd').addEventListener('click', addCustom);
-    document.getElementById('markSold').addEventListener('click', markSold);
-    document.getElementById('reset').addEventListener('click', resetUI);
+// Reset
+document.getElementById("reset").onclick = resetUI;
+function resetUI() {
+  currentPlayer = null;
+  currentBid = 0;
+  selectedOwner = null;
+  playerNameEl.textContent = "No Player Selected";
+  playerMetaEl.textContent = "---";
+  currentBidEl.textContent = "₹0";
+  topBidderEl.textContent = "Top Bidder: ---";
+  searchInput.value = "";
+  suggestions.style.display = "none";
+}
 
-    // click outside suggestions closes it
-    document.addEventListener('click', (ev)=>{
-      if(!document.querySelector('.player-search-wrapper').contains(ev.target)){
-        suggestions.style.display = 'none';
-      }
-    });
-  })();
+// Live update Sold Players
+onValue(ref(db, "sold"), (snapshot) => {
+  soldPlayers = snapshot.exists() ? snapshot.val() : {};
+  renderSoldTable();
+});
 
+// Render Sold Table
+function renderSoldTable() {
+  const filter = ownerFilter.value;
+  const list = Object.values(soldPlayers).filter(p => filter === "All" || p.owner === filter);
+  soldTableBody.innerHTML = "";
+  list.forEach(p => {
+    const row = `<tr>
+      <td>${p.name}</td>
+      <td>${p.type}</td>
+      <td>${p.basePrice}</td>
+      <td>${p.location}</td>
+      <td>₹${p.soldPrice.toLocaleString()}</td>
+      <td>${p.owner}</td>
+    </tr>`;
+    soldTableBody.insertAdjacentHTML("beforeend", row);
+  });
+}
+ownerFilter.onchange = renderSoldTable;
+
+// Export CSV
+document.getElementById("exportCSV").onclick = () => {
+  const rows = [["Player Name","Type","Category","Location","Sold Price","Owner"]];
+  Object.values(soldPlayers).forEach(p => {
+    if (ownerFilter.value === "All" || p.owner === ownerFilter.value)
+      rows.push([p.name, p.type, p.basePrice, p.location, p.soldPrice, p.owner]);
+  });
+  const csv = rows.map(r => r.map(x => `"${x}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sold_players.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+};
 </script>
 </body>
 </html>
