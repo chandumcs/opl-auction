@@ -104,7 +104,6 @@ header {
     <input type="text" id="searchPlayer" placeholder="Search Player Name..." oninput="showSuggestions(this.value)" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
-  <button class="btn-blue" onclick="searchPlayer()">Search</button>
 
   <div style="margin-top:10px;">
     <button class="btn-blue" onclick="increaseBid(20000)">+ ₹20K</button>
@@ -147,11 +146,10 @@ const db = getDatabase(app);
 let players = [];
 get(ref(db, "players")).then((snapshot) => {
   if (snapshot.exists()) {
-    const data = snapshot.val();
-    players = Object.values(data);
+    players = Object.values(snapshot.val());
     console.log("✅ Loaded players:", players.length);
   } else {
-    alert("⚠️ No players found in database!");
+    alert("⚠️ No players found in Firebase!");
   }
 });
 
@@ -166,6 +164,7 @@ let owners = {
   "Raviraj": 72,
   "Mahinder": 66
 };
+
 function renderOwners() {
   const c = document.getElementById("owners");
   c.innerHTML = "";
@@ -184,27 +183,44 @@ let currentPlayer = null;
 let currentBid = 0;
 let topBidder = "---";
 
+// ✅ Enhanced Search Function
 function showSuggestions(value) {
   const suggestionBox = document.getElementById("suggestions");
   suggestionBox.innerHTML = "";
-  if (!value.trim()) return (suggestionBox.style.display = "none");
 
-  const matches = players.filter((p) =>
-    p["Employee Name"].toLowerCase().includes(value.toLowerCase())
-  );
+  const search = value.trim().toLowerCase();
+  if (!search) return (suggestionBox.style.display = "none");
+
+  // Match any part of name or partial match
+  const matches = players
+    .filter((p) => {
+      const name = (p["Employee Name"] || "").trim().toLowerCase();
+      return name.includes(search) || name.split(" ").some((part) => part.startsWith(search));
+    })
+    .slice(0, 30); // limit to top 30
+
+  if (matches.length === 0) {
+    const div = document.createElement("div");
+    div.textContent = "No players found";
+    div.style.color = "#999";
+    div.style.padding = "8px";
+    suggestionBox.appendChild(div);
+    suggestionBox.style.display = "block";
+    return;
+  }
 
   matches.forEach((p) => {
     const div = document.createElement("div");
-    div.textContent = p["Employee Name"];
+    div.textContent = p["Employee Name"].trim();
     div.onclick = () => {
-      document.getElementById("searchPlayer").value = p["Employee Name"];
+      document.getElementById("searchPlayer").value = p["Employee Name"].trim();
       suggestionBox.style.display = "none";
       selectPlayer(p);
     };
     suggestionBox.appendChild(div);
   });
 
-  suggestionBox.style.display = matches.length ? "block" : "none";
+  suggestionBox.style.display = "block";
 }
 
 document.addEventListener("click", (e) => {
@@ -242,7 +258,8 @@ function resetBid() {
 }
 
 function markSold() {
-  if (!currentPlayer || topBidder === "---") return alert("Select player and bidder!");
+  if (!currentPlayer || topBidder === "---")
+    return alert("Select player and bidder first!");
   const ownerBal = owners[topBidder];
   const newBal = ownerBal - currentBid / 10000000;
   if (newBal < 0) return alert("Not enough balance!");
