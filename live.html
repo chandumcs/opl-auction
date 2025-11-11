@@ -1,125 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Olive Premier League 2025 — Live Auction</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OPL 2025 — Live Auction View</title>
 <style>
-  body { font-family: Arial, sans-serif; background:#f0f4ff; color:#002b5c; text-align:center; margin:0; }
-  header { background:#002b5c; color:white; padding:15px; font-size:22px; font-weight:bold; display:flex; align-items:center; justify-content:center; }
-  header img { height:40px; margin-right:10px; }
-  .playerBox { background:white; margin:30px auto; border-radius:10px; padding:20px; width:90%; max-width:700px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
-  .bid { font-size:40px; font-weight:bold; color:orange; margin:10px 0; }
-  .owners { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:20px auto; max-width:800px; }
-  .ownerCard { background:#003d82; color:white; border-radius:8px; padding:10px; }
-  .ownerCard .wallet { font-size:13px; color:#b6e1ff; }
-  .soldList { background:#f9fafc; border-radius:10px; padding:15px; margin:20px auto; width:90%; max-width:800px; text-align:left; box-shadow:0 3px 8px rgba(0,0,0,0.1); }
-  .sold { border-bottom:1px solid #ddd; padding:6px 0; }
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f8fb;margin:0;text-align:center;color:#002244;}
+  header{background:#052f57;color:#fff;padding:20px;font-size:26px;font-weight:600;}
+  .container{max-width:900px;margin:50px auto;padding:20px;}
+  .player-card{background:#003d82;color:#fff;padding:30px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+  .player-name{font-size:30px;font-weight:700;margin:10px 0;}
+  .details{font-size:17px;margin-bottom:10px;color:#e0e8ff;}
+  .base{font-size:20px;color:#ffe47a;margin:10px 0;}
+  .bid{font-size:32px;font-weight:700;margin-top:20px;color:#00ff8c;}
+  .owner{font-size:18px;margin-top:10px;}
+  footer{background:#052f57;color:#fff;padding:15px;margin-top:40px;border-radius:8px 8px 0 0;}
 </style>
 </head>
 <body>
-  <header>
-    <img src="assets/logo.png" alt="logo" />
-    Olive Premier League 2025 — Live Auction
-  </header>
 
-  <div class="playerBox">
-    <h2 id="playerName">Waiting for next player...</h2>
-    <p>Type: <span id="playerType">—</span> | Class: <span id="playerClass">—</span></p>
-    <div class="bid" id="currentBid">₹0</div>
-    <p>Top Bidder: <span id="topBidder">—</span></p>
+<header>🏏 OPL 2025 — Live Auction Feed</header>
+
+<div class="container">
+  <div class="player-card" id="playerCard">
+    <div class="player-name" id="pName">Awaiting Next Player...</div>
+    <div class="details" id="pInfo">—</div>
+    <div class="base" id="pBase">Base Price: ₹0</div>
+    <div class="bid" id="pBid">Current Bid: ₹0</div>
+    <div class="owner" id="pOwner">Last Bid By: —</div>
   </div>
+</div>
 
-  <h3>Owners & Remaining Wallets</h3>
-  <div class="owners" id="ownerGrid"></div>
+<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
-  <div class="soldList">
-    <h4>🏏 Sold / History</h4>
-    <div id="soldList"></div>
-  </div>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+  authDomain: "opl-2025-season-2.firebaseapp.com",
+  databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "opl-2025-season-2",
+  storageBucket: "opl-2025-season-2.firebasestorage.app",
+  messagingSenderId: "282929654033",
+  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0",
+  measurementId: "G-WT75JLVR2E"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  <footer style="background:#002b5c;color:white;padding:10px;font-size:14px;">
-    © 2025 Olive Crypto Systems Pvt. Ltd.
-  </footer>
+/* Format in readable short form */
+function formatPrice(value){
+  if(!value)return"₹0";
+  if(value>=10000000)return"₹"+(value/10000000).toFixed(1)+" Cr";
+  if(value>=100000)return"₹"+(value/100000).toFixed(1)+" L";
+  if(value>=1000)return"₹"+(value/1000).toFixed(0)+" K";
+  return"₹"+value;
+}
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+/* Real-time listener */
+db.ref("currentPlayer").on("value",snap=>{
+  const data=snap.val();
+  const nameEl=document.getElementById("pName");
+  const infoEl=document.getElementById("pInfo");
+  const baseEl=document.getElementById("pBase");
+  const bidEl=document.getElementById("pBid");
+  const ownerEl=document.getElementById("pOwner");
 
-  <script>
-    // 🔥 Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
-      authDomain: "opl-2025-season-2.firebaseapp.com",
-      databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "opl-2025-season-2",
-      storageBucket: "opl-2025-season-2.firebasestorage.app",
-      messagingSenderId: "282929654033",
-      appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
-    };
+  if(!data){
+    nameEl.textContent="Awaiting Next Player...";
+    infoEl.textContent="—";
+    baseEl.textContent="Base Price: ₹0";
+    bidEl.textContent="Current Bid: ₹0";
+    ownerEl.textContent="Last Bid By: —";
+    return;
+  }
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const Cr = 10000000;
+  if(data.basePrice==0||!data.basePrice){
+    data.basePrice=(data.type==="A")?20000000:5000000;
+    db.ref("currentPlayer/basePrice").set(data.basePrice);
+  }
 
-    // 🔹 Listen for Live Auction Changes
-    db.ref("live").on("value", async (snap) => {
-      const data = snap.val() || {};
-
-      if (!data.currentPlayerKey) {
-        document.getElementById("playerName").innerText = "Waiting for next player...";
-        document.getElementById("playerType").innerText = "—";
-        document.getElementById("playerClass").innerText = "—";
-        document.getElementById("currentBid").innerText = "₹" + (data.currentBid || 0).toLocaleString();
-        document.getElementById("topBidder").innerText = data.currentBidder || "—";
-        return;
-      }
-
-      try {
-        const pSnap = await db.ref("players/" + data.currentPlayerKey).once("value");
-        const p = pSnap.val() || {};
-
-        document.getElementById("playerName").innerText = p.name || "Unknown Player";
-        document.getElementById("playerType").innerText = p.type || "-";
-        document.getElementById("playerClass").innerText = p.category || "-";
-        document.getElementById("currentBid").innerText = "₹" + (data.currentBid || 0).toLocaleString();
-        document.getElementById("topBidder").innerText = data.currentBidder || "—";
-      } catch (err) {
-        console.error("Error fetching player:", err);
-      }
-    });
-
-    // 🔹 Owners’ Wallets (Live Updates)
-    db.ref("owners").on("value", (s) => {
-      const grid = document.getElementById("ownerGrid");
-      grid.innerHTML = "";
-      const o = s.val() || {};
-
-      Object.keys(o).forEach((k) => {
-        const d = document.createElement("div");
-        d.className = "ownerCard";
-        d.innerHTML = `
-          <div><b>${k}</b></div>
-          <div>${o[k].captain}</div>
-          <div class='wallet'>₹${Number(o[k].wallet || 0).toLocaleString()} (${(o[k].wallet / Cr).toFixed(2)}Cr)</div>`;
-        grid.appendChild(d);
-      });
-    });
-
-    // 🔹 Sold Players History
-    db.ref("soldPlayers").on("value", (s) => {
-      const el = document.getElementById("soldList");
-      el.innerHTML = "";
-      if (!s.exists()) return;
-
-      const soldArray = Object.values(s.val()).reverse();
-      soldArray.forEach((p) => {
-        const d = document.createElement("div");
-        d.className = "sold";
-        d.innerHTML = `<strong>${p.name}</strong> (${p.type || "-"}) — ₹${p.currentBid.toLocaleString()} | ${p.team}`;
-        el.appendChild(d);
-      });
-    });
-  </script>
+  nameEl.textContent=data.name||"—";
+  infoEl.textContent=`${data.category||""} • ${data.type||""}`;
+  baseEl.textContent=`Base Price: ${formatPrice(data.basePrice)}`;
+  bidEl.textContent=`Current Bid: ${formatPrice(data.currentBid||data.basePrice)}`;
+  ownerEl.textContent=`Last Bid By: ${data.lastBidBy||"—"}`;
+});
+</script>
 </body>
 </html>
