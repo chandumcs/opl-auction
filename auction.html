@@ -2,119 +2,108 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>🏏 OPL 2025 — Auction Console</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏆 OPL 2025 — Admin Auction Console</title>
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f3f6fa;
-  color:#002244;
+body {
+  font-family: "Segoe UI", sans-serif;
+  background: #f3f6fa;
+  margin: 0;
+  color: #002244;
 }
-header{
-  background:#052f57;
-  color:#fff;
-  text-align:center;
-  padding:15px;
-  font-size:20px;
-  letter-spacing:1px;
-  font-weight:600;
+header {
+  background: #052f57;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
-.container{
-  max-width:900px;
-  background:white;
-  margin:25px auto;
-  border-radius:14px;
-  padding:25px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.1);
-  text-align:center;
+.container {
+  max-width: 950px;
+  background: white;
+  margin: 30px auto;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  text-align: center;
 }
-h2{
-  color:#052f57;
+.details {
+  background: #052f57;
+  color: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
 }
-.details{
-  background:#052f57;
-  color:white;
-  border-radius:12px;
-  padding:15px;
-  margin-bottom:20px;
+.price {
+  font-size: 38px;
+  color: orange;
+  margin: 10px;
+  font-weight: bold;
 }
-.details h3{
-  margin:5px;
+input[type="text"] {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 15px;
+  width: 200px;
 }
-.price{
-  font-size:38px;
-  color:orange;
-  margin:10px;
-  font-weight:bold;
+button {
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin: 5px;
+  transition: 0.2s;
 }
-input[type="text"], select{
-  padding:10px;
-  width:220px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  text-align:center;
-  font-size:15px;
-  margin-top:10px;
+.btn-blue { background: #007bff; color: white; }
+.btn-blue:hover { background: #005ec4; }
+.btn-green { background: #16a34a; color: white; }
+.btn-gray { background: #6c757d; color: white; }
+.owner-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
 }
-button{
-  border:none;
-  cursor:pointer;
-  font-size:15px;
-  padding:10px 15px;
-  border-radius:8px;
-  margin:5px;
-  transition:0.2s;
+.owner {
+  background: orange;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  transition: 0.3s;
 }
-.btn-blue{background:#007bff;color:white;}
-.btn-blue:hover{background:#005ec4;}
-.btn-green{background:#16a34a;color:white;}
-.btn-orange{background:orange;color:white;}
-.btn-gray{background:#6c757d;color:white;}
-.owner-boxes{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-  gap:10px;
-  margin-top:20px;
+.owner:hover {
+  transform: scale(1.05);
+  background: #ff7b00;
 }
-.owner{
-  background:orange;
-  color:white;
-  font-weight:600;
-  border-radius:8px;
-  padding:8px;
-  cursor:pointer;
-  transition:0.3s;
+.remaining {
+  font-size: 13px;
+  opacity: 0.9;
 }
-.owner:hover{
-  transform:scale(1.05);
-  background:#ff7b00;
-}
-.remaining{
-  font-size:13px;
-  color:#fff;
-  opacity:0.85;
-}
-.export-box{
-  margin-top:30px;
-  background:#f8fafc;
-  border:1px solid #d0d7e2;
-  padding:15px;
-  border-radius:10px;
-}
-.export-box select, .export-box button{
-  margin:10px;
+footer {
+  background: #052f57;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  margin-top: 30px;
 }
 </style>
 </head>
 <body>
-<header>🚀 OPL 2025 — Auction Console</header>
+<header>🚀 OPL 2025 — Admin Auction Console</header>
 
 <div class="container">
-  <div class="details" id="playerBox">
+  <div class="details">
     <h3 id="playerName">No Player Selected</h3>
-    <p id="playerType">Select a player to start</p>
+    <p id="playerType">---</p>
     <div class="price" id="currentBid">₹0</div>
+    <p>Top Bidder: <span id="topBidder">---</span></p>
   </div>
 
   <div>
@@ -123,35 +112,41 @@ button{
   </div>
 
   <div style="margin-top:10px;">
-    <button class="btn-blue" onclick="increaseBid(20000)">+ ₹20 K</button>
-    <button class="btn-blue" onclick="increaseBid(50000)">+ ₹50 K</button>
+    <button class="btn-blue" onclick="increaseBid(20000)">+ ₹20K</button>
+    <button class="btn-blue" onclick="increaseBid(50000)">+ ₹50K</button>
     <input type="text" id="customBid" placeholder="Custom ₹" oninput="validateNumber(this)">
     <button class="btn-blue" onclick="addCustom()">Add</button>
   </div>
 
   <h3 style="margin-top:25px;">Owners</h3>
-  <div class="owner-boxes" id="ownersContainer"></div>
+  <div class="owner-box" id="ownersContainer"></div>
 
   <div style="margin-top:15px;">
-    <button class="btn-green" onclick="markSold()">✅ Sold</button>
+    <button class="btn-green" onclick="markSold()">✅ Mark Sold</button>
     <button class="btn-gray" onclick="resetBid()">🔁 Reset</button>
-  </div>
-
-  <div class="export-box">
-    <h4>📦 Export Sold Players</h4>
-    <select id="ownerFilter">
-      <option value="">All Owners</option>
-    </select>
-    <button class="btn-blue" onclick="exportData()">Export</button>
   </div>
 </div>
 
-<footer style="text-align:center;margin-top:30px;padding:15px;background:#052f57;color:white;">
-  © 2025 Olive Crypto Systems Pvt. Ltd.
-</footer>
+<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
-<script>
-// Owners with starting purse
+<!-- Firebase + Logic -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+  authDomain: "opl-2025-season-2.firebaseapp.com",
+  databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "opl-2025-season-2",
+  storageBucket: "opl-2025-season-2.firebasestorage.app",
+  messagingSenderId: "282929654033",
+  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// --- Auction Logic ---
 const owners = {
   "Sharath": 6450000000,
   "Sarath Chava": 7700000000,
@@ -163,7 +158,6 @@ const owners = {
   "Mahinder": 6600000000
 };
 
-// Player list
 const players = [
   { name:"Avinash Komarabathini", type:"B" },
   { name:"Amarthya Porandla", type:"A" },
@@ -175,121 +169,31 @@ let selectedPlayer=null;
 let currentBid=0;
 let currentOwner=null;
 
-// Populate owner cards
-const ownersContainer=document.getElementById('ownersContainer');
+// Populate Owners
+const ownersContainer=document.getElementById("ownersContainer");
 Object.entries(owners).forEach(([name,balance])=>{
-  const div=document.createElement('div');
-  div.className='owner';
+  const div=document.createElement("div");
+  div.className="owner";
   div.innerHTML=`${name}<div class='remaining'>₹${(balance/10000000).toFixed(2)} Cr</div>`;
   div.onclick=()=>selectOwner(name);
   ownersContainer.appendChild(div);
 });
 
-// Fill owner dropdown
-const dropdown=document.getElementById('ownerFilter');
-Object.keys(owners).forEach(o=>{
-  const opt=document.createElement('option');
-  opt.value=o; opt.text=o;
-  dropdown.appendChild(opt);
-});
-
-function searchPlayer(){
-  const term=document.getElementById('searchPlayer').value.trim().toLowerCase();
-  const player=players.find(p=>p.name.toLowerCase().includes(term));
-  if(player){
-    selectedPlayer=player;
-    document.getElementById('playerName').innerText=player.name;
-    document.getElementById('playerType').innerText=`Type: ${player.type}`;
-    currentBid=player.type==="A"?20000000:5000000;
-    document.getElementById('currentBid').innerText=`₹${currentBid.toLocaleString()}`;
-  } else {
-    alert("Player not found!");
-  }
-}
-
-function increaseBid(amount){
-  if(!selectedPlayer){alert("Select a player first!");return;}
-  currentBid+=amount;
-  document.getElementById('currentBid').innerText=`₹${currentBid.toLocaleString()}`;
-}
-
-function validateNumber(input){
-  input.value=input.value.replace(/[^0-9]/g,'');
-}
-
-function addCustom(){
-  const custom=parseInt(document.getElementById('customBid').value||"0");
-  if(custom>0 && selectedPlayer){
-    currentBid+=custom;
-    document.getElementById('currentBid').innerText=`₹${currentBid.toLocaleString()}`;
-    document.getElementById('customBid').value="";
-  }
-}
-
-function selectOwner(name){
-  currentOwner=name;
-  alert(`${name} is the top bidder`);
-}
-
-function markSold(){
-  if(!selectedPlayer||!currentOwner){
-    alert("Select player and owner first!");return;
-  }
-  const ownerBal=owners[currentOwner];
-  if(ownerBal<currentBid){
-    alert("Insufficient balance!");
-    return;
-  }
-  owners[currentOwner]-=currentBid;
-  updateOwnersDisplay();
-
-  soldData.push({
-    Player:selectedPlayer.name,
-    Type:selectedPlayer.type,
-    SoldPrice:currentBid,
-    Owner:currentOwner,
-    Status:"Sold"
-  });
-
-  alert(`${selectedPlayer.name} sold to ${currentOwner} for ₹${currentBid.toLocaleString()}`);
-  resetBid();
-}
-
-function resetBid(){
-  selectedPlayer=null;
-  currentBid=0;
-  currentOwner=null;
-  document.getElementById('playerName').innerText="No Player Selected";
-  document.getElementById('playerType').innerText="Select a player to start";
-  document.getElementById('currentBid').innerText="₹0";
-}
-
 function updateOwnersDisplay(){
   ownersContainer.innerHTML="";
   Object.entries(owners).forEach(([name,balance])=>{
-    const div=document.createElement('div');
-    div.className='owner';
+    const div=document.createElement("div");
+    div.className="owner";
     div.innerHTML=`${name}<div class='remaining'>₹${(balance/10000000).toFixed(2)} Cr</div>`;
     div.onclick=()=>selectOwner(name);
     ownersContainer.appendChild(div);
   });
 }
 
-// Export functionality
-const soldData=[];
-function exportData(){
-  const owner=document.getElementById('ownerFilter').value;
-  const filtered=owner?soldData.filter(d=>d.Owner===owner):soldData;
-  if(filtered.length===0){alert("No data to export.");return;}
-  const header=["Player","Type","SoldPrice","Owner","Status"];
-  const rows=filtered.map(d=>[d.Player,d.Type,d.SoldPrice,d.Owner,d.Status]);
-  const csv=[header.join(","),...rows.map(r=>r.join(","))].join("\n");
-  const blob=new Blob([csv],{type:"text/csv"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=`${owner||"All"}_SoldPlayers.csv`;
-  a.click();
-}
-</script>
-</body>
-</html>
+function searchPlayer(){
+  const term=document.getElementById("searchPlayer").value.trim().toLowerCase();
+  const player=players.find(p=>p.name.toLowerCase().includes(term));
+  if(player){
+    selectedPlayer=player;
+    document.getElementById("playerName").innerText=player.name;
+    document.getElementById("playerType").innerText=`Type: ${pla
