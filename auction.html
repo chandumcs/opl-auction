@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>🏏 OPL 2025 — Admin Auction Console</title>
 <style>
 body {
@@ -24,7 +24,7 @@ header {
   margin: 25px auto;
   border-radius: 15px;
   padding: 25px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 .price {
@@ -45,10 +45,36 @@ header {
   border-radius: 8px;
   padding: 10px;
 }
-.btn-blue { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin: 5px; cursor: pointer; }
-.btn-blue:hover { background: #005ec4; }
-.btn-green { background: #008000; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin: 5px; cursor: pointer; }
-.btn-gray { background: #555; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin: 5px; cursor: pointer; }
+.btn-blue {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  margin: 5px;
+  cursor: pointer;
+}
+.btn-blue:hover {
+  background: #005ec4;
+}
+.btn-green {
+  background: #008000;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  margin: 5px;
+  cursor: pointer;
+}
+.btn-gray {
+  background: #555;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  margin: 5px;
+  cursor: pointer;
+}
 
 /* ✅ Search Box & Dropdown */
 .player-search-wrapper {
@@ -71,7 +97,7 @@ header {
   background: #fff;
   border: 1px solid #ccc;
   border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   z-index: 9999;
   max-height: 250px;
   overflow-y: auto;
@@ -101,53 +127,83 @@ header {
   </div>
 
   <div class="player-search-wrapper">
-    <input type="text" id="searchPlayer" placeholder="Search Player Name..." oninput="showSuggestions(this.value)" autocomplete="off">
+    <input
+      type="text"
+      id="searchPlayer"
+      placeholder="Search Player Name..."
+      oninput="showSuggestions(this.value)"
+      autocomplete="off"
+    />
     <div id="suggestions" class="suggestions"></div>
   </div>
 
-  <div style="margin-top:10px;">
+  <div style="margin-top: 10px">
     <button class="btn-blue" onclick="increaseBid(20000)">+ ₹20K</button>
     <button class="btn-blue" onclick="increaseBid(50000)">+ ₹50K</button>
-    <input type="number" id="customAmount" placeholder="Custom ₹" style="padding:8px;border-radius:8px;width:100px;">
+    <input
+      type="number"
+      id="customAmount"
+      placeholder="Custom ₹"
+      style="padding: 8px; border-radius: 8px; width: 100px"
+    />
     <button class="btn-blue" onclick="addCustom()">Add</button>
   </div>
 
   <h3>Owners</h3>
   <div id="owners" class="owner-grid"></div>
 
-  <div style="margin-top:15px;">
+  <div style="margin-top: 15px">
     <button class="btn-green" onclick="markSold()">✅ Mark Sold</button>
     <button class="btn-gray" onclick="resetBid()">⟳ Reset</button>
   </div>
 </div>
 
-<footer style="background:#002d62;color:white;text-align:center;padding:10px;">
+<footer
+  style="background: #002d62; color: white; text-align: center; padding: 10px"
+>
   © 2025 Olive Crypto Systems Pvt. Ltd.
 </footer>
 
 <script type="module">
-// ✅ Firebase Configuration
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import {
+  getDatabase,
+  ref,
+  get,
+  set,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
   authDomain: "opl-2025-season-2.firebaseapp.com",
-  databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  databaseURL:
+    "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "opl-2025-season-2",
   storageBucket: "opl-2025-season-2.firebasestorage.app",
   messagingSenderId: "282929654033",
-  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
+  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let players = [];
-get(ref(db, "players")).then((snapshot) => {
+
+// ✅ Load all players
+get(ref(db, "/players")).then((snapshot) => {
   if (snapshot.exists()) {
-    players = Object.values(snapshot.val());
-    console.log("✅ Loaded players:", players.length);
+    const data = snapshot.val();
+    players = Object.values(data).map((p) => ({
+      name:
+        p["Employee Name"] ||
+        p["EmployeeName"] ||
+        p["Player Name"] ||
+        p["Player"] ||
+        "",
+      type: p["Category"] || p["Type"] || "",
+      response: p["Response"] || p["Role"] || "",
+    }));
+    console.log("✅ Loaded Players:", players.length);
   } else {
     alert("⚠️ No players found in Firebase!");
   }
@@ -155,14 +211,14 @@ get(ref(db, "players")).then((snapshot) => {
 
 // --- Owners Wallet ---
 let owners = {
-  "Sharath": 64.5,
+  Sharath: 64.5,
   "Sarath Chava": 77,
-  "Teja": 75,
-  "Vamsi": 69.5,
-  "Rajan": 62,
-  "Shabeer": 70,
-  "Raviraj": 72,
-  "Mahinder": 66
+  Teja: 75,
+  Vamsi: 69.5,
+  Rajan: 62,
+  Shabeer: 70,
+  Raviraj: 72,
+  Mahinder: 66,
 };
 
 function renderOwners() {
@@ -178,12 +234,11 @@ function renderOwners() {
 }
 renderOwners();
 
-// --- Auction Core ---
 let currentPlayer = null;
 let currentBid = 0;
 let topBidder = "---";
 
-// ✅ Enhanced Search Function
+// ✅ Full dropdown search (multi-word)
 function showSuggestions(value) {
   const suggestionBox = document.getElementById("suggestions");
   suggestionBox.innerHTML = "";
@@ -191,13 +246,15 @@ function showSuggestions(value) {
   const search = value.trim().toLowerCase();
   if (!search) return (suggestionBox.style.display = "none");
 
-  // Match any part of name or partial match
   const matches = players
     .filter((p) => {
-      const name = (p["Employee Name"] || "").trim().toLowerCase();
-      return name.includes(search) || name.split(" ").some((part) => part.startsWith(search));
+      const name = p.name.trim().toLowerCase();
+      return (
+        name.includes(search) ||
+        name.split(" ").some((part) => part.startsWith(search))
+      );
     })
-    .slice(0, 30); // limit to top 30
+    .slice(0, 40);
 
   if (matches.length === 0) {
     const div = document.createElement("div");
@@ -211,15 +268,14 @@ function showSuggestions(value) {
 
   matches.forEach((p) => {
     const div = document.createElement("div");
-    div.textContent = p["Employee Name"].trim();
+    div.textContent = p.name;
     div.onclick = () => {
-      document.getElementById("searchPlayer").value = p["Employee Name"].trim();
+      document.getElementById("searchPlayer").value = p.name;
       suggestionBox.style.display = "none";
       selectPlayer(p);
     };
     suggestionBox.appendChild(div);
   });
-
   suggestionBox.style.display = "block";
 }
 
@@ -230,9 +286,9 @@ document.addEventListener("click", (e) => {
 
 function selectPlayer(p) {
   currentPlayer = p;
-  currentBid = p.Category === "A" ? 20000000 : 5000000;
-  document.getElementById("playerName").textContent = p["Employee Name"];
-  document.getElementById("playerType").textContent = `Type: ${p.Category} | ${p.Response}`;
+  currentBid = p.type === "A" ? 20000000 : 5000000;
+  document.getElementById("playerName").textContent = p.name;
+  document.getElementById("playerType").textContent = `Type: ${p.type} | ${p.response}`;
   document.getElementById("currentBid").textContent = `₹${currentBid.toLocaleString()}`;
 }
 
@@ -265,12 +321,12 @@ function markSold() {
   if (newBal < 0) return alert("Not enough balance!");
   owners[topBidder] = newBal;
   renderOwners();
-  set(ref(db, "auction/history/" + currentPlayer["Employee Name"]), {
+  set(ref(db, "auction/history/" + currentPlayer.name), {
     ...currentPlayer,
     soldPrice: currentBid,
     owner: topBidder,
   });
-  alert(`${currentPlayer["Employee Name"]} sold to ${topBidder} for ₹${currentBid.toLocaleString()}`);
+  alert(`${currentPlayer.name} sold to ${topBidder} for ₹${currentBid.toLocaleString()}`);
   resetBid();
 }
 </script>
