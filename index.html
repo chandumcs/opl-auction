@@ -1,171 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Olive Premier League 2025 — Entry</title>
-
-  <style>
-    :root {
-      --navy: #002B5B;
-      --orange: #FF6600;
-      --light-bg: #F8FAFF;
-    }
-
-    body {
-      margin: 0;
-      background: linear-gradient(135deg, var(--navy), #004080, var(--orange));
-      background-size: 400% 400%;
-      animation: gradientMove 10s ease infinite;
-      font-family: "Poppins", sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-      flex-direction: column;
-      color: white;
-    }
-
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .splash {
-      text-align: center;
-      animation: fadeOut 1s ease-in-out 9s forwards;
-    }
-
-    @keyframes fadeOut {
-      to {
-        opacity: 0;
-        visibility: hidden;
-      }
-    }
-
-    .splash img {
-      width: 220px;
-      animation: float 1s ease-in-out infinite;
-      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6));
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .splash h1 {
-      color: white;
-      font-size: 26px;
-      margin-top: 18px;
-      letter-spacing: 1px;
-      font-weight: 600;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-
-    .role-select {
-      text-align: center;
-      opacity: 0;
-      animation: fadeIn 1s ease-in-out 10s forwards;
-    }
-
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-
-    .role-select h2 {
-      color: white;
-      font-size: 22px;
-      margin-bottom: 20px;
-    }
-
-    button {
-      margin: 10px;
-      padding: 12px 28px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      color: white;
-      background: var(--navy);
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-
-    button:hover {
-      background: var(--orange);
-      transform: scale(1.05);
-    }
-
-    #pinBox {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      animation: fadeIn 0.6s ease forwards;
-    }
-
-    input[type="password"] {
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      width: 180px;
-      text-align: center;
-      margin-bottom: 12px;
-      font-size: 16px;
-    }
-
-    .error {
-      color: #FFD6D6;
-      font-size: 14px;
-      display: none;
-      font-weight: 500;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Olive Premier League 2025</title>
+<style>
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Arial,sans-serif;
+    background:#f5f8fb;
+    color:#001a33;
+    text-align:center;
+  }
+  .splash, .main{
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:#052f57;
+    color:white;
+    transition:opacity 0.5s ease;
+  }
+  .splash img{
+    width:140px;
+    height:140px;
+    margin-bottom:20px;
+    animation:pop 1.5s ease infinite alternate;
+  }
+  .splash h1{
+    font-size:28px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:1px;
+  }
+  @keyframes pop {
+    from { transform:scale(1); opacity:0.9; }
+    to { transform:scale(1.1); opacity:1; }
+  }
+  .main{background:#f4f7fb;color:#002244;opacity:0;pointer-events:none;}
+  .main.active{opacity:1;pointer-events:auto;}
+  .card{
+    background:white;
+    border-radius:12px;
+    padding:30px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    width:320px;
+    margin:20px auto;
+  }
+  button{
+    background:#007bff;
+    color:white;
+    border:none;
+    padding:12px 18px;
+    font-size:16px;
+    border-radius:8px;
+    cursor:pointer;
+    margin:10px;
+  }
+  button:hover{background:#005dc0;}
+  input{
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ccd6e3;
+    font-size:15px;
+    width:100%;
+    margin-top:10px;
+  }
+</style>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div class="splash">
-    <img src="assets/logo.png" alt="Olive Logo" />
-    <h1>Olive Premier League 2025 — Season 2</h1>
+
+<!-- Splash Screen -->
+<div class="splash" id="splash">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/9/94/Olive_icon.svg" alt="Olive Logo">
+  <h1>Olive Premier League 2025</h1>
+</div>
+
+<!-- Main Role Selection -->
+<div class="main" id="main">
+  <div class="card">
+    <h2>Welcome to OPL 2025</h2>
+    <p>Select your role to continue:</p>
+    <button onclick="showAdmin()">Admin</button>
+    <button onclick="location.href='live.html'">User (Viewer)</button>
   </div>
 
-  <!-- Role Selection -->
-  <div class="role-select">
-    <h2>Select Your Role</h2>
-    <button onclick="showPin()">Admin</button>
-    <button onclick="goToLive()">User</button>
+  <div class="card" id="adminCard" style="display:none;">
+    <h3>Admin Access</h3>
+    <p>Enter PIN to proceed:</p>
+    <input type="password" id="adminPin" placeholder="Enter 4-digit PIN" maxlength="4">
+    <button onclick="checkPin()">Login</button>
+    <p id="pinMsg" style="color:red;display:none;">Invalid PIN</p>
   </div>
+</div>
 
-  <!-- PIN Input -->
-  <div id="pinBox">
-    <h2>Enter Admin PIN</h2>
-    <input type="password" id="pinInput" placeholder="Enter PIN" maxlength="4" />
-    <button onclick="checkPin()">Submit</button>
-    <p class="error" id="errorMsg">Incorrect PIN. Please try again.</p>
-  </div>
+<script>
+setTimeout(()=>{
+  document.getElementById('splash').style.opacity='0';
+  document.getElementById('main').classList.add('active');
+},3000);
 
-  <script>
-    function showPin() {
-      document.querySelector('.role-select').style.display = 'none';
-      document.getElementById('pinBox').style.display = 'flex';
-    }
+function showAdmin(){
+  document.getElementById('adminCard').style.display='block';
+}
 
-    function goToLive() {
-      window.location.href = 'live.html';
-    }
+function checkPin(){
+  const pin=document.getElementById('adminPin').value;
+  if(pin==='7287'){
+    window.location.href='auction.html';
+  }else{
+    document.getElementById('pinMsg').style.display='block';
+  }
+}
+</script>
 
-    function checkPin() {
-      const pin = document.getElementById('pinInput').value;
-      const error = document.getElementById('errorMsg');
-      if (pin === '7287') {
-        window.location.href = 'admin.html';
-      } else {
-        error.style.display = 'block';
-      }
-    }
-  </script>
 </body>
 </html>
