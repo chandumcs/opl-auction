@@ -3,169 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>OPL 2025 — Live Auction</title>
+<title>🏏 OPL 2025 — Auction Console</title>
 <style>
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f8fb;margin:0;color:#021a33;}
-  header{background:#052f57;color:#fff;text-align:center;padding:15px;font-size:22px;font-weight:600;}
-  .container{max-width:900px;margin:40px auto;padding:20px;}
-  .card{background:#fff;padding:25px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08);}
-  .player-box{background:#003d82;color:#fff;border-radius:10px;padding:20px;text-align:center;margin-bottom:20px;}
-  .player-box h2{margin:0;}
-  .price{font-size:26px;font-weight:700;color:#ffe47a;margin-top:10px;}
-  .bids{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:20px;}
-  .bid-btn{background:#007bff;color:#fff;border:none;padding:12px 18px;border-radius:8px;cursor:pointer;font-size:16px;}
-  .bid-btn:hover{background:#005dc0;}
-  .custom-box{margin-top:12px;}
-  input[type="number"]{padding:10px;border-radius:8px;border:1px solid #cdd9ea;font-size:15px;width:120px;}
-  .owner-section{margin-top:25px;text-align:center;}
-  .owner-btn{background:#ff7a00;color:#fff;border:none;padding:10px 18px;margin:5px;border-radius:8px;cursor:pointer;}
-  .owner-btn:hover{background:#e76a00;}
-  footer{background:#052f57;color:#fff;text-align:center;padding:15px;margin-top:40px;border-radius:8px 8px 0 0;}
-</style>
-</head>
-<body>
-
-<header>🏏 OPL 2025 — Auction Console</header>
-<div class="container">
-  <div class="card">
-    <div class="player-box" id="playerBox">
-      <h2 id="playerName">No Player Selected</h2>
-      <div id="playerDetails" style="margin-top:6px;font-size:15px;">Select a player to start</div>
-      <div class="price" id="basePrice">₹0</div>
-    </div>
-
-    <div class="bids">
-      <button class="bid-btn" data-inc="20000">+ ₹20 K</button>
-      <button class="bid-btn" data-inc="50000">+ ₹50 K</button>
-      <div class="custom-box">
-        <input type="number" id="customAmount" placeholder="Custom ₹" />
-        <button class="bid-btn" id="customBtn">Add</button>
-      </div>
-    </div>
-
-    <div class="owner-section">
-      <h3>Owners</h3>
-      <div id="owners"></div>
-      <button id="soldBtn" class="owner-btn" style="background:#28a745;">✅ Sold</button>
-      <button id="resetBtn" class="owner-btn" style="background:#6c757d;">🔄 Reset</button>
-    </div>
-  </div>
-</div>
-
-<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script>
-const firebaseConfig={
-  apiKey:"AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
-  authDomain:"opl-2025-season-2.firebaseapp.com",
-  databaseURL:"https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"opl-2025-season-2",
-  storageBucket:"opl-2025-season-2.firebasestorage.app",
-  messagingSenderId:"282929654033",
-  appId:"1:282929654033:web:535ab2b78937cdfa2b04b0",
-  measurementId:"G-WT75JLVR2E"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-
-/* Format currency short */
-function formatPrice(value){
-  if(!value)return"₹0";
-  if(value>=10000000)return"₹"+(value/10000000).toFixed(1)+" Cr";
-  if(value>=100000)return"₹"+(value/100000).toFixed(1)+" L";
-  if(value>=1000)return"₹"+(value/1000).toFixed(0)+" K";
-  return"₹"+value;
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f3f6fa;
+  color:#002244;
 }
-
-let currentPlayer=null;
-let currentBid=0;
-let owners=["Sharath","Sarath Chava","Teja","Vamsi","Rajan","Shabeer","Raviraj","Mahinder"];
-
-/* Render owner buttons */
-const ownersDiv=document.getElementById("owners");
-owners.forEach(o=>{
-  const btn=document.createElement("button");
-  btn.className="owner-btn";
-  btn.textContent=o;
-  btn.onclick=()=>placeBid(o);
-  ownersDiv.appendChild(btn);
-});
-
-/* Firebase listener for current player */
-db.ref("currentPlayer").on("value",snap=>{
-  const data=snap.val();
-  if(!data)return;
-  currentPlayer=data;
-  if(data.basePrice==0||!data.basePrice){
-    data.basePrice=(data.type==="A")?20000000:5000000;
-    db.ref("currentPlayer/basePrice").set(data.basePrice);
-  }
-  currentBid=data.currentBid||data.basePrice;
-  document.getElementById("playerName").innerText=data.name||"—";
-  document.getElementById("playerDetails").innerText=`${data.category||""} • ${data.type||""}`;
-  document.getElementById("basePrice").innerText=formatPrice(currentBid);
-});
-
-/* Bid increment buttons */
-document.querySelectorAll(".bid-btn[data-inc]").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    const inc=Number(btn.getAttribute("data-inc"));
-    if(!currentPlayer)return alert("No player selected!");
-    currentBid+=inc;
-    updateBid();
-  });
-});
-
-/* Custom amount */
-document.getElementById("customBtn").onclick=()=>{
-  const amt=Number(document.getElementById("customAmount").value);
-  if(!amt||amt<=0)return alert("Enter valid amount");
-  currentBid+=amt;
-  updateBid();
-  document.getElementById("customAmount").value="";
-};
-
-/* Place bid */
-function placeBid(owner){
-  if(!currentPlayer)return;
-  db.ref("currentPlayer").update({
-    currentBid:currentBid,
-    lastBidBy:owner
-  });
-  document.getElementById("basePrice").innerText=formatPrice(currentBid);
+header{
+  background:#052f57;
+  color:#fff;
+  text-align:center;
+  padding:15px;
+  font-size:20px;
+  letter-spacing:1px;
+  font-weight:600;
 }
-
-/* Update bid display + Firebase */
-function updateBid(){
-  document.getElementById("basePrice").innerText=formatPrice(currentBid);
-  db.ref("currentPlayer/currentBid").set(currentBid);
+.container{
+  max-width:900px;
+  background:white;
+  margin:25px auto;
+  border-radius:14px;
+  padding:25px;
+  box-shadow:0 5px 15px rgba(0,0,0,0.1);
+  text-align:center;
 }
-
-/* Sold */
-document.getElementById("soldBtn").onclick=()=>{
-  if(!currentPlayer)return;
-  db.ref("soldPlayers/"+currentPlayer.id).set({
-    ...currentPlayer,
-    soldPrice:currentBid,
-    soldTo:currentPlayer.lastBidBy||"Unknown",
-    timestamp:Date.now()
-  });
-  db.ref("currentPlayer").remove();
-  alert(`✅ ${currentPlayer.name} sold to ${currentPlayer.lastBidBy||"Unknown"} for ${formatPrice(currentBid)}`);
-  document.getElementById("playerName").innerText="No Player Selected";
-  document.getElementById("playerDetails").innerText="Select next player to continue";
-  document.getElementById("basePrice").innerText="₹0";
-};
-
-/* Reset */
-document.getElementById("resetBtn").onclick=()=>{
-  if(confirm("Reset current auction?")){
-    db.ref("currentPlayer/currentBid").set(currentPlayer.basePrice);
-    document.getElementById("basePrice").innerText=formatPrice(currentPlayer.basePrice);
-  }
-};
-</script>
-</body>
-</html>
+h2{
+  color:#052f57;
+}
+.details{
+  background:#052f57;
+  color:white;
+  border-radius:12px;
+  padding:15px;
+  margin-bottom:20px;
+}
+.details h3{
+  margin:5px;
+}
+.price{
+  font-size:38px;
+  color:orange;
+  margin:10px;
+  font-weight:bold;
+}
+input[type="text"], select{
+  padding:10px;
+  width:220px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  text-align:center;
+  font-size:15px;
+  margin-top:10px;
+}
+button{
+  border:none;
+  cursor:pointer;
+  font-size:15px;
+  padding:10px 15px;
+  border-radius:8px;
+  margin:5px;
+  transition:0.2s;
+}
+.btn-blue{background:#007bff;color:white;}
+.btn-blue:hover{background:#005ec4;}
+.btn-green{background:#16a34a;color:white;}
+.btn-orange{background:orange;color:white;}
+.btn-gray{background:#6c757d;color:white;}
+.owner-boxes{
+  display:grid
