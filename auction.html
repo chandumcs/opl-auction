@@ -53,7 +53,7 @@ header {
 /* ✅ Search Box & Dropdown */
 .player-search-wrapper {
   position: relative;
-  width: 260px;
+  width: 280px;
   margin: 0 auto 15px;
 }
 .player-search-wrapper input {
@@ -73,7 +73,7 @@ header {
   border-radius: 6px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   z-index: 9999;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
   display: none;
 }
@@ -101,12 +101,7 @@ header {
   </div>
 
   <div class="player-search-wrapper">
-    <input 
-      type="text" 
-      id="searchPlayer" 
-      placeholder="Search Player Name..." 
-      oninput="showSuggestions(this.value)" 
-      autocomplete="off">
+    <input type="text" id="searchPlayer" placeholder="Search Player Name..." oninput="showSuggestions(this.value)" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
   <button class="btn-blue" onclick="searchPlayer()">Search</button>
@@ -131,20 +126,36 @@ header {
   © 2025 Olive Crypto Systems Pvt. Ltd.
 </footer>
 
-<script>
-// --- Player List (sample of your Excel data) ---
-const players = [
-  { name: "Chandra Sekhar Mallela", type: "A", category: "All Rounder" },
-  { name: "Avinash Komarabathini", type: "B", category: "All Rounder" },
-  { name: "Bhaskar Kalapala", type: "A", category: "All Rounder" },
-  { name: "Sai Dattu Kotagiri", type: "B", category: "Batsman" },
-  { name: "Brahmaiah Divve", type: "A", category: "All Rounder" },
-  { name: "Saran Raj", type: "B", category: "Batsman" },
-];
+<script type="module">
+// ✅ Firebase Configuration
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-let currentPlayer = null;
-let currentBid = 0;
-let topBidder = "---";
+const firebaseConfig = {
+  apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
+  authDomain: "opl-2025-season-2.firebaseapp.com",
+  databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "opl-2025-season-2",
+  storageBucket: "opl-2025-season-2.firebasestorage.app",
+  messagingSenderId: "282929654033",
+  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let players = [];
+get(ref(db, "players")).then((snapshot) => {
+  if (snapshot.exists()) {
+    const data = snapshot.val();
+    players = Object.values(data);
+    console.log("✅ Loaded players:", players.length);
+  } else {
+    alert("⚠️ No players found in database!");
+  }
+});
+
+// --- Owners Wallet ---
 let owners = {
   "Sharath": 64.5,
   "Sarath Chava": 77,
@@ -155,8 +166,6 @@ let owners = {
   "Raviraj": 72,
   "Mahinder": 66
 };
-
-// Display owners
 function renderOwners() {
   const c = document.getElementById("owners");
   c.innerHTML = "";
@@ -164,43 +173,40 @@ function renderOwners() {
     const div = document.createElement("div");
     div.className = "owner";
     div.innerHTML = `<b>${name}</b><br>₹${bal.toFixed(2)} Cr`;
-    div.onclick = () => topBidder = name;
+    div.onclick = () => (topBidder = name);
     c.appendChild(div);
   });
 }
 renderOwners();
 
-// ✅ Dropdown Suggestion Function
+// --- Auction Core ---
+let currentPlayer = null;
+let currentBid = 0;
+let topBidder = "---";
+
 function showSuggestions(value) {
   const suggestionBox = document.getElementById("suggestions");
   suggestionBox.innerHTML = "";
+  if (!value.trim()) return (suggestionBox.style.display = "none");
 
-  if (!value) {
-    suggestionBox.style.display = "none";
-    return;
-  }
+  const matches = players.filter((p) =>
+    p["Employee Name"].toLowerCase().includes(value.toLowerCase())
+  );
 
-  const matches = players.filter(p => p.name.toLowerCase().includes(value.toLowerCase()));
-  if (matches.length === 0) {
-    suggestionBox.style.display = "none";
-    return;
-  }
-
-  matches.forEach(player => {
+  matches.forEach((p) => {
     const div = document.createElement("div");
-    div.textContent = player.name;
+    div.textContent = p["Employee Name"];
     div.onclick = () => {
-      document.getElementById("searchPlayer").value = player.name;
+      document.getElementById("searchPlayer").value = p["Employee Name"];
       suggestionBox.style.display = "none";
-      selectPlayer(player);
+      selectPlayer(p);
     };
     suggestionBox.appendChild(div);
   });
 
-  suggestionBox.style.display = "block";
+  suggestionBox.style.display = matches.length ? "block" : "none";
 }
 
-// Hide dropdown when clicking outside
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".player-search-wrapper"))
     document.getElementById("suggestions").style.display = "none";
@@ -208,9 +214,9 @@ document.addEventListener("click", (e) => {
 
 function selectPlayer(p) {
   currentPlayer = p;
-  currentBid = (p.type === "A") ? 20000000 : 5000000; // A = 2Cr, B = 50L
-  document.getElementById("playerName").textContent = p.name;
-  document.getElementById("playerType").textContent = `Type: ${p.type} | Category: ${p.category}`;
+  currentBid = p.Category === "A" ? 20000000 : 5000000;
+  document.getElementById("playerName").textContent = p["Employee Name"];
+  document.getElementById("playerType").textContent = `Type: ${p.Category} | ${p.Response}`;
   document.getElementById("currentBid").textContent = `₹${currentBid.toLocaleString()}`;
 }
 
@@ -236,13 +242,18 @@ function resetBid() {
 }
 
 function markSold() {
-  if (!currentPlayer || topBidder === "---") return alert("Select player and bidder first!");
+  if (!currentPlayer || topBidder === "---") return alert("Select player and bidder!");
   const ownerBal = owners[topBidder];
-  const newBal = ownerBal - (currentBid / 10000000);
+  const newBal = ownerBal - currentBid / 10000000;
   if (newBal < 0) return alert("Not enough balance!");
   owners[topBidder] = newBal;
   renderOwners();
-  alert(`${currentPlayer.name} sold to ${topBidder} for ₹${currentBid.toLocaleString()}`);
+  set(ref(db, "auction/history/" + currentPlayer["Employee Name"]), {
+    ...currentPlayer,
+    soldPrice: currentBid,
+    owner: topBidder,
+  });
+  alert(`${currentPlayer["Employee Name"]} sold to ${topBidder} for ₹${currentBid.toLocaleString()}`);
   resetBid();
 }
 </script>
