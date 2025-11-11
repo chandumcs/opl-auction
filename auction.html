@@ -48,7 +48,7 @@ input[type="text"] {
   border: 1px solid #ccc;
   text-align: center;
   font-size: 15px;
-  width: 200px;
+  width: 250px;
 }
 button {
   border: none;
@@ -93,6 +93,25 @@ footer {
   padding: 15px;
   margin-top: 30px;
 }
+
+/* Dropdown suggestions */
+.suggestions {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 250px;
+  margin: auto;
+  z-index: 10;
+}
+.suggestions div {
+  padding: 8px;
+  cursor: pointer;
+}
+.suggestions div:hover {
+  background: #007bff;
+  color: white;
+}
 </style>
 </head>
 <body>
@@ -106,10 +125,11 @@ footer {
     <p>Top Bidder: <span id="topBidder">---</span></p>
   </div>
 
-  <div>
-    <input type="text" id="searchPlayer" placeholder="Search Player Name...">
-    <button class="btn-blue" onclick="searchPlayer()">Search</button>
+  <div style="position:relative; display:inline-block;">
+    <input type="text" id="searchPlayer" placeholder="Search Player Name..." oninput="showSuggestions(this.value)">
+    <div id="suggestions" class="suggestions" style="display:none;"></div>
   </div>
+  <button class="btn-blue" onclick="searchPlayer()">Search</button>
 
   <div style="margin-top:10px;">
     <button class="btn-blue" onclick="increaseBid(20000)">+ ₹20K</button>
@@ -146,7 +166,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- Auction Logic ---
+// Owners
 const owners = {
   "Sharath": 6450000000,
   "Sarath Chava": 7700000000,
@@ -158,19 +178,23 @@ const owners = {
   "Mahinder": 6600000000
 };
 
+// Player List
 const players = [
   { name:"Avinash Komarabathini", type:"B" },
   { name:"Amarthya Porandla", type:"A" },
   { name:"Ajith Kumar M", type:"A" },
   { name:"Dinesh Kumar Peddi", type:"B" },
+  { name:"Brahmaiah Divve", type:"A" },
+  { name:"Chandra Sekhar Mallela", type:"A" },
+  { name:"Raghu Yalakapati", type:"B" },
 ];
 
-let selectedPlayer=null;
-let currentBid=0;
-let currentOwner=null;
+let selectedPlayer = null;
+let currentBid = 0;
+let currentOwner = null;
 
 // Populate Owners
-const ownersContainer=document.getElementById("ownersContainer");
+const ownersContainer = document.getElementById("ownersContainer");
 Object.entries(owners).forEach(([name,balance])=>{
   const div=document.createElement("div");
   div.className="owner";
@@ -190,16 +214,43 @@ function updateOwnersDisplay(){
   });
 }
 
+// ✅ Autocomplete Suggestion Logic
+function showSuggestions(value){
+  const suggestionBox=document.getElementById("suggestions");
+  if(!value){suggestionBox.style.display="none";return;}
+
+  const matches=players.filter(p=>p.name.toLowerCase().includes(value.toLowerCase()));
+  if(matches.length===0){suggestionBox.style.display="none";return;}
+
+  suggestionBox.innerHTML="";
+  matches.forEach(p=>{
+    const div=document.createElement("div");
+    div.textContent=p.name;
+    div.onclick=()=>{
+      document.getElementById("searchPlayer").value=p.name;
+      suggestionBox.style.display="none";
+      selectPlayer(p);
+    };
+    suggestionBox.appendChild(div);
+  });
+  suggestionBox.style.display="block";
+}
+
+// Select a player from suggestion
+function selectPlayer(player){
+  selectedPlayer=player;
+  document.getElementById("playerName").innerText=player.name;
+  document.getElementById("playerType").innerText=`Type: ${player.type}`;
+  currentBid = player.type==="A"?20000000:5000000;
+  document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
+}
+
+// Manual Search
 function searchPlayer(){
   const term=document.getElementById("searchPlayer").value.trim().toLowerCase();
   const player=players.find(p=>p.name.toLowerCase().includes(term));
-  if(player){
-    selectedPlayer=player;
-    document.getElementById("playerName").innerText=player.name;
-    document.getElementById("playerType").innerText=`Type: ${player.type}`;
-    currentBid=player.type==="A"?20000000:5000000;
-    document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
-  }else alert("Player not found!");
+  if(player) selectPlayer(player);
+  else alert("Player not found!");
 }
 
 function increaseBid(amount){
