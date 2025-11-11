@@ -1,132 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏏 OPL 2025 — Live Auction</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🏏 OPL 2025 — Live Auction Viewer</title>
 <style>
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f4f7fc;
-  color:#002244;
-}
-header{
-  background:#052f57;
-  color:#fff;
-  text-align:center;
-  padding:15px;
-  font-size:20px;
-  font-weight:600;
-}
-.container{
-  max-width:950px;
-  background:white;
-  margin:30px auto;
-  border-radius:15px;
-  padding:25px;
-  box-shadow:0 6px 20px rgba(0,0,0,0.1);
-  text-align:center;
-}
-.price{
-  font-size:45px;
-  color:orange;
-  margin:10px;
-  font-weight:bold;
-}
-.owner-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-  gap:12px;
-  margin-top:20px;
-}
-.owner{
-  background:#003366;
-  color:white;
-  border-radius:8px;
-  padding:10px;
-}
-footer{
-  background:#052f57;
-  color:white;
-  text-align:center;
-  padding:15px;
-  margin-top:30px;
-}
-
-/* Search box */
-.search-section {
-  margin: 20px auto;
-  text-align: center;
-}
-input[type="text"] {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  text-align: center;
-  font-size: 15px;
-  width: 250px;
-}
-button {
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  padding: 10px 15px;
-  border-radius: 8px;
-  margin: 5px;
-  transition: 0.2s;
-}
-.btn-blue { background: #007bff; color: white; }
-.btn-blue:hover { background: #005ec4; }
-
-.player-result {
-  margin-top: 20px;
-  padding: 15px;
-  background: #e9f2ff;
-  border-radius: 10px;
-  display: none;
-}
-.player-result h3 {
-  margin: 5px 0;
-  color: #052f57;
-}
-.player-result p {
-  margin: 3px 0;
-}
+  :root{--nav:#002d62;--accent:#ff9800;--blue:#007bff;--bg:#eef3fa}
+  body{font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);margin:0}
+  header{background:var(--nav);color:#fff;padding:16px;text-align:center;font-weight:700;font-size:20px}
+  .container{max-width:1000px;margin:25px auto;padding:25px;background:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(2,20,56,.08)}
+  .price{font-size:46px;color:orange;font-weight:700;margin:15px 0}
+  h3{margin:0}
+  .muted{color:#475569}
+  .player-box{padding:25px;border:2px solid var(--blue);border-radius:12px;text-align:center;background:#f0f7ff;margin-bottom:25px}
+  .sold-section{margin-top:30px}
+  table{width:100%;border-collapse:collapse;margin-top:15px}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+  th{background:var(--nav);color:#fff}
+  tr:nth-child(even){background:#f9f9f9}
+  .filter{display:flex;justify-content:space-between;align-items:center;margin:15px 0}
+  select{padding:8px 10px;border-radius:6px;border:1px solid #ccc}
+  .player-search{position:relative;width:300px;margin:10px 0}
+  .player-search input{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc}
+  .suggestions{position:absolute;background:#fff;border:1px solid #ccc;left:0;right:0;top:42px;border-radius:6px;max-height:250px;overflow:auto;display:none;z-index:999}
+  .suggestions div{padding:8px;cursor:pointer;border-bottom:1px solid #eee}
+  .suggestions div:hover{background:var(--blue);color:#fff}
 </style>
 </head>
 <body>
-<header>🎥 OPL 2025 — Live Auction Feed</header>
+<header>🏏 OPL 2025 — Live Auction Viewer</header>
 
 <div class="container">
-  <h2 id="livePlayer">Waiting for next player...</h2>
-  <p id="liveType">---</p>
-  <h1 id="liveBid">₹0</h1>
-  <h3 id="liveOwner">---</h3>
+  <div class="player-box">
+    <h3 id="livePlayerName">Waiting for next player...</h3>
+    <div id="livePlayerMeta" class="muted">---</div>
+    <div class="price" id="liveBid">₹0</div>
+    <div id="liveTopBidder" class="muted">Top Bidder: ---</div>
+  </div>
 
-  <h3 style="margin-top:30px;">Owners & Remaining Wallets</h3>
-  <div id="liveOwners" class="owner-grid"></div>
-
-  <!-- 🔍 Player Search Section -->
-  <div class="search-section">
-    <h3>Search Player Details</h3>
-    <input type="text" id="searchPlayer" placeholder="Enter Player Name">
-    <button class="btn-blue" onclick="searchPlayer()">Search</button>
-    <div id="playerResult" class="player-result">
-      <h3 id="resName"></h3>
-      <p id="resType"></p>
-      <p id="resCategory"></p>
-      <p id="resOwner"></p>
-      <p id="resPrice"></p>
+  <div class="sold-section">
+    <div class="filter">
+      <div class="player-search">
+        <input id="searchPlayer" type="text" placeholder="Search player name...">
+        <div id="suggestions" class="suggestions"></div>
+      </div>
+      <div>
+        <label>Filter by Owner: </label>
+        <select id="ownerFilter">
+          <option value="All">All Owners</option>
+        </select>
+      </div>
     </div>
+
+    <table id="soldTable">
+      <thead>
+        <tr>
+          <th>Player Name</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Sold Price (₹)</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 </div>
 
-<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
+<footer style="background:#002d62;color:#fff;text-align:center;padding:10px;margin-top:25px">
+  © 2025 Olive Crypto Systems Pvt. Ltd.
+</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
@@ -141,60 +89,99 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// 🔴 LIVE UPDATES SECTION
-const auctionRef = ref(db,"auction/current");
-onValue(auctionRef,(snapshot)=>{
-  const data=snapshot.val();
-  if(data){
-    const p=data.currentPlayer;
-    const o=data.owners;
+let players = [];
+let soldPlayers = {};
 
-    document.getElementById("livePlayer").innerText=p.name;
-    document.getElementById("liveType").innerText=`Type: ${p.type}`;
-    document.getElementById("liveBid").innerText=`₹${p.soldPrice.toLocaleString()}`;
-    document.getElementById("liveOwner").innerText=`Sold to: ${p.owner}`;
+const livePlayerName = document.getElementById("livePlayerName");
+const livePlayerMeta = document.getElementById("livePlayerMeta");
+const liveBid = document.getElementById("liveBid");
+const liveTopBidder = document.getElementById("liveTopBidder");
+const soldTableBody = document.querySelector("#soldTable tbody");
+const ownerFilter = document.getElementById("ownerFilter");
+const searchInput = document.getElementById("searchPlayer");
+const suggestions = document.getElementById("suggestions");
 
-    const c=document.getElementById("liveOwners");
-    c.innerHTML="";
-    Object.entries(o).forEach(([name,balance])=>{
-      const d=document.createElement("div");
-      d.className="owner";
-      d.innerHTML=`<b>${name}</b><br><small>₹${(balance/10000000).toFixed(2)} Cr</small>`;
-      c.appendChild(d);
-    });
+// Load players (for search suggestions)
+get(ref(db, "/players")).then(snap=>{
+  if(snap.exists()) players = Object.values(snap.val());
+});
+
+// 🔴 Listen to LIVE auction updates
+onValue(ref(db, "/live"), snap=>{
+  if(!snap.exists()) return;
+  const p = snap.val();
+  if(p && p.name){
+    livePlayerName.textContent = p.name;
+    livePlayerMeta.textContent = `Type: ${p.type} | ${p.basePrice} | ${p.location}`;
+    liveBid.textContent = "₹" + (p.currentBid||0).toLocaleString();
+    liveTopBidder.textContent = `Top Bidder: ${p.topBidder||"---"}`;
   }
 });
 
-// 🔍 PLAYER SEARCH FUNCTION
-async function searchPlayer(){
-  const name=document.getElementById("searchPlayer").value.trim().toLowerCase();
-  const resultBox=document.getElementById("playerResult");
-  if(!name){ alert("Please enter a player name"); return; }
+// 🟢 Listen to sold players updates
+onValue(ref(db, "/sold"), snap=>{
+  soldPlayers = snap.exists() ? snap.val() : {};
+  renderSoldTable();
+});
 
-  const snapshot = await get(ref(db,"auction/history"));
-  if(snapshot.exists()){
-    const data = snapshot.val();
-    let found = null;
-    Object.values(data).forEach(player=>{
-      if(player.name && player.name.toLowerCase().includes(name)){
-        found = player;
-      }
-    });
+// Filter by owner
+ownerFilter.onchange = renderSoldTable;
 
-    if(found){
-      resultBox.style.display="block";
-      document.getElementById("resName").innerText=found.name;
-      document.getElementById("resType").innerText=`Type: ${found.type}`;
-      document.getElementById("resCategory").innerText=`Category: ${found.category || "-"}`;
-      document.getElementById("resOwner").innerText=`Owner: ${found.owner}`;
-      document.getElementById("resPrice").innerText=`Sold Price: ₹${found.soldPrice.toLocaleString()}`;
-    } else {
-      resultBox.style.display="block";
-      document.getElementById("playerResult").innerHTML=`<p>No player found</p>`;
-    }
-  } else {
-    alert("No player data found in Firebase yet!");
+// Search box
+searchInput.addEventListener("input", e=>{
+  const val = e.target.value.trim().toLowerCase();
+  suggestions.innerHTML = "";
+  if(!val){ suggestions.style.display="none"; return; }
+  const matches = Object.values(soldPlayers)
+    .filter(p=>p.name && p.name.toLowerCase().includes(val))
+    .slice(0,30);
+  if(matches.length===0){
+    suggestions.innerHTML = "<div>No players found</div>";
+    suggestions.style.display="block"; return;
   }
+  matches.forEach(p=>{
+    const div=document.createElement("div");
+    div.textContent=`${p.name} (${p.owner})`;
+    div.onclick=()=>{
+      searchInput.value=p.name;
+      suggestions.style.display="none";
+      highlightRow(p.name);
+    };
+    suggestions.appendChild(div);
+  });
+  suggestions.style.display="block";
+});
+
+function renderSoldTable(){
+  soldTableBody.innerHTML="";
+  const filter=ownerFilter.value;
+  const list=Object.values(soldPlayers).filter(p=>filter==="All"||p.owner===filter);
+  const ownersAdded=new Set();
+  list.forEach(p=>{
+    if(!ownersAdded.has(p.owner)){
+      const opt=document.createElement("option");
+      opt.value=p.owner;opt.textContent=p.owner;
+      if(!([...ownerFilter.options].some(o=>o.value===p.owner)))
+        ownerFilter.appendChild(opt);
+      ownersAdded.add(p.owner);
+    }
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${p.name}</td><td>${p.type}</td><td>${p.basePrice}</td>
+                  <td>${p.location}</td><td>₹${p.soldPrice.toLocaleString()}</td>
+                  <td>${p.owner}</td>`;
+    soldTableBody.appendChild(tr);
+  });
+}
+
+function highlightRow(name){
+  const rows=soldTableBody.querySelectorAll("tr");
+  rows.forEach(r=>{
+    if(r.children[0].textContent.toLowerCase()===name.toLowerCase()){
+      r.style.background="#ffe082";
+      r.scrollIntoView({behavior:"smooth",block:"center"});
+      setTimeout(()=>r.style.background="",2000);
+    }
+  });
 }
 </script>
 </body>
