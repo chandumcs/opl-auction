@@ -53,6 +53,46 @@ footer{
   padding:15px;
   margin-top:30px;
 }
+
+/* Search box */
+.search-section {
+  margin: 20px auto;
+  text-align: center;
+}
+input[type="text"] {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 15px;
+  width: 250px;
+}
+button {
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin: 5px;
+  transition: 0.2s;
+}
+.btn-blue { background: #007bff; color: white; }
+.btn-blue:hover { background: #005ec4; }
+
+.player-result {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e9f2ff;
+  border-radius: 10px;
+  display: none;
+}
+.player-result h3 {
+  margin: 5px 0;
+  color: #052f57;
+}
+.player-result p {
+  margin: 3px 0;
+}
 </style>
 </head>
 <body>
@@ -66,13 +106,27 @@ footer{
 
   <h3 style="margin-top:30px;">Owners & Remaining Wallets</h3>
   <div id="liveOwners" class="owner-grid"></div>
+
+  <!-- 🔍 Player Search Section -->
+  <div class="search-section">
+    <h3>Search Player Details</h3>
+    <input type="text" id="searchPlayer" placeholder="Enter Player Name">
+    <button class="btn-blue" onclick="searchPlayer()">Search</button>
+    <div id="playerResult" class="player-result">
+      <h3 id="resName"></h3>
+      <p id="resType"></p>
+      <p id="resCategory"></p>
+      <p id="resOwner"></p>
+      <p id="resPrice"></p>
+    </div>
+  </div>
 </div>
 
 <footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
@@ -83,10 +137,12 @@ const firebaseConfig = {
   messagingSenderId: "282929654033",
   appId: "1:282929654033:web:535ab2b78937cdfa2b04b0"
 };
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
-const auctionRef=ref(db,"auction/current");
 
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 🔴 LIVE UPDATES SECTION
+const auctionRef = ref(db,"auction/current");
 onValue(auctionRef,(snapshot)=>{
   const data=snapshot.val();
   if(data){
@@ -108,6 +164,38 @@ onValue(auctionRef,(snapshot)=>{
     });
   }
 });
+
+// 🔍 PLAYER SEARCH FUNCTION
+async function searchPlayer(){
+  const name=document.getElementById("searchPlayer").value.trim().toLowerCase();
+  const resultBox=document.getElementById("playerResult");
+  if(!name){ alert("Please enter a player name"); return; }
+
+  const snapshot = await get(ref(db,"auction/history"));
+  if(snapshot.exists()){
+    const data = snapshot.val();
+    let found = null;
+    Object.values(data).forEach(player=>{
+      if(player.name && player.name.toLowerCase().includes(name)){
+        found = player;
+      }
+    });
+
+    if(found){
+      resultBox.style.display="block";
+      document.getElementById("resName").innerText=found.name;
+      document.getElementById("resType").innerText=`Type: ${found.type}`;
+      document.getElementById("resCategory").innerText=`Category: ${found.category || "-"}`;
+      document.getElementById("resOwner").innerText=`Owner: ${found.owner}`;
+      document.getElementById("resPrice").innerText=`Sold Price: ₹${found.soldPrice.toLocaleString()}`;
+    } else {
+      resultBox.style.display="block";
+      document.getElementById("playerResult").innerHTML=`<p>No player found</p>`;
+    }
+  } else {
+    alert("No player data found in Firebase yet!");
+  }
+}
 </script>
 </body>
 </html>
