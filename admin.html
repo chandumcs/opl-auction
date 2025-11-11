@@ -1,176 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>OPL 2025 — Admin Panel</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OPL 2025 — Admin Control Panel</title>
 <style>
-  body{font-family:"Segoe UI",Arial,sans-serif;background:#f4f7fb;margin:0;color:#001a33;}
-  header{background:#052f57;color:#fff;padding:20px 40px;font-size:20px;font-weight:600;}
-  .container{max-width:1200px;margin:30px auto;padding:20px;}
-  .card{background:#fff;border-radius:12px;padding:25px;margin-bottom:25px;box-shadow:0 4px 12px rgba(0,0,0,0.05);}
-  .row{display:flex;gap:15px;flex-wrap:wrap;margin-bottom:10px;}
-  label{display:block;font-weight:500;margin-bottom:6px;color:#333;}
-  input,select{padding:10px;width:100%;border:1px solid #cdd9ea;border-radius:8px;font-size:15px;}
-  input:focus,select:focus{outline:none;border-color:#007bff;box-shadow:0 0 3px #80bdff;}
-  button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-size:15px;}
-  .btn-primary{background:#007bff;color:#fff;}
-  .btn-success{background:#28a745;color:#fff;}
-  .btn-secondary{background:#e9ecef;color:#000;}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
-  .player-card{background:#003d82;color:#fff;padding:14px;border-radius:10px;cursor:pointer;transition:.2s;}
-  .player-card:hover{background:#0050a8;}
-  .player-card.selected{background:#28a745;}
-  .muted{color:#777;font-size:13px;}
-  .summary{margin-top:15px;font-size:16px;background:#eef4ff;padding:10px;border-radius:8px;}
-  footer{background:#052f57;color:#fff;text-align:center;padding:15px;margin-top:40px;border-radius:8px 8px 0 0;}
+  body{
+    font-family:'Segoe UI',sans-serif;
+    background:#f3f6fa;
+    margin:0;
+  }
+  header{
+    background:#052f57;
+    color:white;
+    padding:15px;
+    text-align:center;
+    font-size:20px;
+    letter-spacing:1px;
+  }
+  .container{
+    max-width:900px;
+    background:white;
+    margin:30px auto;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.1);
+  }
+  h2{
+    color:#003366;
+    text-align:center;
+    margin-bottom:10px;
+  }
+  .details{
+    text-align:center;
+    margin:15px 0;
+  }
+  .price{
+    font-size:40px;
+    color:orange;
+    margin:10px 0;
+    font-weight:bold;
+  }
+  .owners{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:15px;
+    margin-top:20px;
+  }
+  .owner{
+    background:#003366;
+    color:white;
+    border-radius:10px;
+    padding:12px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform 0.2s;
+  }
+  .owner:hover{transform:scale(1.05);}
+  .buttons{
+    text-align:center;
+    margin-top:20px;
+  }
+  .btn{
+    padding:10px 20px;
+    border:none;
+    border-radius:6px;
+    font-size:16px;
+    cursor:pointer;
+    margin:6px;
+  }
+  .btn-blue{background:#004aad;color:white;}
+  .btn-blue:hover{background:#0066cc;}
+  .btn-green{background:green;color:white;}
+  input[type="text"]{
+    padding:10px;
+    width:180px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    text-align:center;
+  }
 </style>
 </head>
 <body>
+<header>
+  🏆 OPL 2025 — Admin Control Panel
+</header>
 
-<header>🏏 OPL 2025 — Admin Player Management</header>
 <div class="container">
-  <div class="card">
-    <div class="row">
-      <div style="flex:2;">
-        <label>Search Player</label>
-        <input type="text" id="search" placeholder="Type to search by name..." />
-      </div>
-      <div style="flex:1;">
-        <label>Type (A/B)</label>
-        <select id="typeSelect">
-          <option value="">Select Type</option>
-          <option value="A">A — Category A (₹2 Cr)</option>
-          <option value="B">B — Category B (₹50 L)</option>
-        </select>
-      </div>
-      <div style="flex:1;">
-        <label>Base Price (₹)</label>
-        <input type="number" id="basePrice" placeholder="Auto-set by Type" />
-      </div>
-      <div style="flex:1;">
-        <label>Owner (Optional)</label>
-        <input type="text" id="owner" placeholder="Enter owner name..." />
-      </div>
-    </div>
-    <button class="btn-primary" id="applyBtn">Apply Base Price</button>
-    <button class="btn-success" id="saveBtn">Save Player (Firebase)</button>
-    <div id="summary" class="summary" style="display:none;"></div>
-  </div>
-
-  <div class="card">
-    <h3>All Players</h3>
-    <div class="grid" id="playerGrid"></div>
-  </div>
-</div>
-
-<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
-  authDomain: "opl-2025-season-2.firebaseapp.com",
-  databaseURL: "https://opl-2025-season-2-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "opl-2025-season-2",
-  storageBucket: "opl-2025-season-2.firebasestorage.app",
-  messagingSenderId: "282929654033",
-  appId: "1:282929654033:web:535ab2b78937cdfa2b04b0",
-  measurementId: "G-WT75JLVR2E"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-/* Helper for currency formatting */
-function formatPrice(value){
-  if(!value) return "₹0";
-  if(value >= 10000000) return "₹" + (value/10000000).toFixed(1) + " Cr";
-  if(value >= 100000) return "₹" + (value/100000).toFixed(1) + " L";
-  return "₹" + value.toLocaleString();
-}
-
-/* Fetch players and auto-fix base prices */
-const playerGrid = document.getElementById('playerGrid');
-let selectedPlayer = null;
-let players = [];
-
-function loadPlayers(){
-  db.ref("players").once("value").then(snapshot=>{
-    players = [];
-    snapshot.forEach(child=>{
-      const p = child.val();
-      if(p.basePrice==0 || !p.basePrice){
-        p.basePrice = (p.type==="A") ? 20000000 : 5000000;
-        db.ref("players/"+child.key+"/basePrice").set(p.basePrice);
-      }
-      players.push({...p,id:child.key});
-    });
-    renderPlayers();
-  });
-}
-
-function renderPlayers(filter=""){
-  playerGrid.innerHTML = "";
-  players.filter(p=>p.name.toLowerCase().includes(filter.toLowerCase()))
-  .forEach(p=>{
-    const div = document.createElement("div");
-    div.className="player-card"+(selectedPlayer&&selectedPlayer.id===p.id?" selected":"");
-    div.innerHTML=`<strong>${p.name}</strong><br>
-      <small>${p.category}</small><br>
-      <span>${p.type} • ${formatPrice(p.basePrice)}</span>`;
-    div.onclick=()=>selectPlayer(p);
-    playerGrid.appendChild(div);
-  });
-}
-
-function selectPlayer(p){
-  selectedPlayer=p;
-  document.getElementById("typeSelect").value=p.type||"";
-  document.getElementById("basePrice").value=p.basePrice||"";
-  document.getElementById("owner").value=p.owner||"";
-  updateSummary();
-  renderPlayers(document.getElementById("search").value);
-}
-
-function updateSummary(){
-  const s=document.getElementById("summary");
-  if(!selectedPlayer){s.style.display="none";return;}
-  s.style.display="block";
-  s.innerHTML=`<b>${selectedPlayer.name}</b> (${selectedPlayer.type}) — ${formatPrice(selectedPlayer.basePrice)}<br>
-  Category: ${selectedPlayer.category} | Location: ${selectedPlayer.location}<br>
-  Owner: ${selectedPlayer.owner||"—"}`;
-}
-
-document.getElementById("search").addEventListener("input",e=>renderPlayers(e.target.value));
-
-document.getElementById("typeSelect").addEventListener("change",()=>{
-  const t=document.getElementById("typeSelect").value;
-  if(t==="A") document.getElementById("basePrice").value=20000000;
-  else if(t==="B") document.getElementById("basePrice").value=5000000;
-});
-
-document.getElementById("applyBtn").onclick=()=>{
-  if(!selectedPlayer) return alert("Select a player first!");
-  selectedPlayer.type=document.getElementById("typeSelect").value;
-  selectedPlayer.basePrice=Number(document.getElementById("basePrice").value)||0;
-  selectedPlayer.owner=document.getElementById("owner").value;
-  updateSummary();
-  renderPlayers(document.getElementById("search").value);
-};
-
-document.getElementById("saveBtn").onclick=()=>{
-  if(!selectedPlayer) return alert("No player selected");
-  db.ref("players/"+selectedPlayer.id).update({
-    type:selectedPlayer.type,
-    basePrice:selectedPlayer.basePrice,
-    owner:selectedPlayer.owner||""
-  }).then(()=>{
-    alert("Player saved to Firebase successfully!");
-  });
-};
-
-loadPlayers();
-</script>
-</body>
-</html>
+  <h2>🎯 Select Player to Start Auction</h2>
+  <div class="details">
+    <div id="playerInfo">---</div>
+    <div>Type: <span id="playerType">---</span> | Base Price: <span id="basePrice">₹0</span
