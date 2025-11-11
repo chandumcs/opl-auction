@@ -1,195 +1,211 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>🏏 Olive Premier League 2025</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Olive Premier League 2025</title>
 
-<style>
-  body {
-    margin: 0;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: white;
-    color: #002d62;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  <style>
+    :root{
+      --navy: #053a5b;
+      --accent: #ff9a1c;
+      --muted: #f3f7fb;
+      --card: #fff;
+    }
+    html,body{height:100%;margin:0;font-family: "Segoe UI", Roboto, Arial, sans-serif;background:var(--muted);color:var(--navy);}
+    .wrap {
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:40px 20px;
+      box-sizing:border-box;
+    }
 
-  .logo-screen, .role-screen, .pin-screen {
-    position: absolute;
-    text-align: center;
-    transition: opacity 1s ease;
-  }
+    .splash {
+      text-align:center;
+    }
 
-  .logo-screen img {
-    width: 200px;
-    height: auto;
-  }
+    .logo {
+      width:220px;height:auto;margin:0 auto 18px auto;display:block;
+    }
 
-  .logo-screen h1 {
-    font-size: 26px;
-    margin-top: 18px;
-    color: #ff9800;
-    font-weight: 700;
-  }
+    h1{
+      margin:0 0 18px 0;
+      color:var(--accent);
+      font-size:28px;
+      font-weight:700;
+    }
 
-  .role-screen {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 1s ease;
-  }
+    /* card */
+    .card {
+      width:100%;
+      max-width:760px;
+      background:var(--card);
+      border-radius:12px;
+      box-shadow: 0 10px 30px rgba(10,30,50,0.08);
+      padding:36px;
+      box-sizing:border-box;
+      text-align:center;
+    }
 
-  .role-screen.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    .role-row{display:flex;gap:18px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+    .btn {
+      background:var(--navy);
+      color:white;
+      border:none;
+      padding:12px 26px;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:16px;
+      font-weight:600;
+    }
+    .btn.alt{background:#0b74ff}
+    .btn.white{background:#fff;color:var(--navy);border:1px solid #e6eefb}
 
-  .role-screen h2 {
-    font-size: 26px;
-    color: #002d62;
-    margin-bottom: 25px;
-  }
+    /* PIN modal box (inline) */
+    .pin-box{
+      margin-top:16px;
+      display:inline-block;
+      text-align:center;
+      background:linear-gradient(180deg,#ffffff, #fbfdff);
+      padding:20px 26px;border-radius:10px;border:1px solid #e6eefb;
+    }
+    input[type="password"]{
+      padding:10px 12px;font-size:18px;border-radius:8px;border:1px solid #cfdfea;width:180px;text-align:center;outline:none;
+    }
+    .error { color:#d23434;margin-top:8px;font-weight:600; }
 
-  .buttons {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-  }
+    footer{position:fixed;left:0;right:0;bottom:0;padding:8px 12px;text-align:center;color:#7996b2;font-size:13px}
 
-  .btn {
-    background: #ff9800;
-    color: #fff;
-    border: none;
-    padding: 12px 28px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 600;
-    transition: background 0.3s, transform 0.2s;
-  }
+    /* animation small */
+    .fade-in { animation: fadeIn 600ms ease both; }
+    @keyframes fadeIn { from{ opacity:0; transform:translateY(8px)} to{opacity:1; transform:none;} }
 
-  .btn:hover {
-    background: #ffb84d;
-    transform: translateY(-2px);
-  }
-
-  .pin-screen {
-    opacity: 0;
-    visibility: hidden;
-    transform: scale(0.95);
-    transition: all 0.4s ease;
-  }
-
-  .pin-screen.show {
-    opacity: 1;
-    visibility: visible;
-    transform: scale(1);
-  }
-
-  .pin-box {
-    background: #f7f9fc;
-    border-radius: 10px;
-    padding: 25px 35px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    display: inline-block;
-  }
-
-  input[type="password"] {
-    padding: 10px;
-    font-size: 18px;
-    width: 200px;
-    text-align: center;
-    border: 2px solid #002d62;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    outline: none;
-  }
-
-  .error {
-    color: red;
-    margin-top: 5px;
-    font-size: 14px;
-  }
-
-  footer {
-    position: absolute;
-    bottom: 10px;
-    font-size: 13px;
-    color: #555;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  .logo-screen {
-    animation: fadeIn 1.2s ease;
-  }
-</style>
+    /* small responsive */
+    @media (max-width:520px){
+      .card { padding:20px; margin: 10px; }
+      .logo { width:160px; }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <div class="card fade-in" id="mainCard">
+      <!-- logo (path relative to repository: assets/logo.png) -->
+      <img src="assets/logo.png" alt="Olive Logo" class="logo" id="logoImg" onerror="logoError()" />
+      <h1>Olive Premier League 2025</h1>
 
-<!-- Splash Logo Screen -->
-<div class="logo-screen" id="logoScreen">
-  <img src="https://chandumcs.github.io/opl-auction/assets/logo.png" alt="Olive Logo" />
-  <h1>Olive Premier League 2025</h1>
-</div>
+      <!-- role selection -->
+      <p style="color:#345a7a;margin:0 0 18px 0;font-weight:600">Select your role to continue</p>
 
-<!-- Role Selection Screen -->
-<div class="role-screen" id="roleScreen">
-  <h2>Welcome to OPL 2025</h2>
-  <div class="buttons">
-    <button class="btn" onclick="showPinScreen()">Admin</button>
-    <button class="btn" onclick="window.location.href='live.html'">User (Live Viewer)</button>
+      <div class="role-row">
+        <button class="btn" id="adminBtn">Admin</button>
+        <button class="btn alt" id="viewerBtn">User (Viewer)</button>
+      </div>
+
+      <!-- PIN area (hidden until admin clicked) -->
+      <div id="pinArea" style="margin-top:18px;display:none" class="fade-in">
+        <div class="pin-box">
+          <div style="font-weight:700;margin-bottom:8px">🔒 Admin PIN required</div>
+          <input id="pinInput" type="password" inputmode="numeric" maxlength="4" placeholder="Enter 4-digit PIN" />
+          <div style="margin-top:10px;">
+            <button class="btn white" id="pinSubmit">Submit</button>
+            <button class="btn white" id="pinCancel" style="margin-left:8px">Cancel</button>
+          </div>
+          <div id="pinError" class="error" style="display:none"></div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<!-- PIN Entry Screen -->
-<div class="pin-screen" id="pinScreen">
-  <div class="pin-box">
-    <h3>🔐 Enter Admin PIN</h3>
-    <input type="password" id="pinInput" placeholder="Enter PIN" maxlength="4" />
-    <br>
-    <button class="btn" onclick="verifyPin()">Submit</button>
-    <div id="errorMsg" class="error"></div>
-  </div>
-</div>
-
-<footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
+  <footer>© 2025 Olive Crypto Systems Pvt. Ltd.</footer>
 
 <script>
-  // Transition from splash to role select
-  setTimeout(() => {
-    document.getElementById("logoScreen").style.opacity = "0";
-    document.getElementById("roleScreen").classList.add("show");
-  }, 3000);
+  // CONFIG
+  const ADMIN_PIN = "7287";            // PIN you requested
+  const ADMIN_TARGET = "auction.html"; // where admin should be taken
+  const VIEWER_TARGET = "live.html";   // viewer page
 
-  function showPinScreen() {
-    document.getElementById("roleScreen").style.opacity = "0";
-    setTimeout(() => {
-      document.getElementById("pinScreen").classList.add("show");
-    }, 400);
-  }
+  // DOM
+  const adminBtn = document.getElementById("adminBtn");
+  const viewerBtn = document.getElementById("viewerBtn");
+  const pinArea  = document.getElementById("pinArea");
+  const pinInput = document.getElementById("pinInput");
+  const pinSubmit = document.getElementById("pinSubmit");
+  const pinCancel = document.getElementById("pinCancel");
+  const pinError = document.getElementById("pinError");
+  const logoImg = document.getElementById("logoImg");
 
-  function verifyPin() {
-    const enteredPin = document.getElementById("pinInput").value.trim();
-    const correctPin = "7287";
-    const errorMsg = document.getElementById("errorMsg");
+  // show pin area
+  adminBtn.addEventListener("click", ()=> {
+    pinError.style.display = "none";
+    pinInput.value = "";
+    pinArea.style.display = "block";
+    pinInput.focus();
+    // small scroll so user sees it on small screens
+    setTimeout(()=> pinInput.scrollIntoView({behavior:"smooth", block:"center"}), 50);
+  });
 
-    if (enteredPin === correctPin) {
-      errorMsg.textContent = "";
-      window.location.href = "auction.html";
+  // viewer redirect
+  viewerBtn.addEventListener("click", ()=> {
+    // open live viewer
+    window.location.href = VIEWER_TARGET;
+  });
+
+  // submit pin either via button or Enter key
+  pinSubmit.addEventListener("click", verifyPin);
+  pinInput.addEventListener("keydown", (ev)=>{
+    if(ev.key === "Enter") verifyPin();
+  });
+
+  pinCancel.addEventListener("click", ()=>{
+    pinArea.style.display = "none";
+    pinError.style.display = "none";
+  });
+
+  function verifyPin(){
+    const val = (pinInput.value || "").trim();
+    if(!/^\d{4}$/.test(val)){
+      pinError.textContent = "Enter the 4-digit PIN.";
+      pinError.style.display = "block";
+      return;
+    }
+    if(val === ADMIN_PIN){
+      // correct -> redirect to admin page
+      // small delay so user sees it
+      pinError.style.display = "none";
+      // Use location.href to navigate (works on GitHub Pages)
+      window.location.href = ADMIN_TARGET;
     } else {
-      errorMsg.textContent = "❌ Incorrect PIN. Please try again.";
+      pinError.textContent = "Incorrect PIN — try again.";
+      pinError.style.display = "block";
+      pinInput.select();
     }
   }
-</script>
 
+  // If logo not found, show a colored placeholder and avoid broken icon
+  function logoError(){
+    logoImg.style.display = "none";
+    const h1 = document.querySelector("h1");
+    const ph = document.createElement("div");
+    ph.innerText = "Olive";
+    ph.style.display = "inline-block";
+    ph.style.padding = "10px 18px";
+    ph.style.borderRadius = "8px";
+    ph.style.background = "linear-gradient(90deg,#053a5b,#0b74ff)";
+    ph.style.color = "#fff";
+    ph.style.fontWeight = "800";
+    ph.style.letterSpacing = "0.6px";
+    ph.style.margin = "0 auto 10px auto";
+    h1.parentNode.insertBefore(ph, h1);
+  }
+
+  // accessibility: focus management if user lands with pin param ?admin
+  (function checkQuery(){
+    const q = new URLSearchParams(window.location.search);
+    if(q.get("admin")==="1"){ adminBtn.click(); }
+  })();
+</script>
 </body>
 </html>
