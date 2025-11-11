@@ -3,35 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🏏 OPL 2025 Auction Debug</title>
+<title>🏏 OPL 2025 — Admin Auction Console</title>
 <style>
 body {
-  font-family: Arial, sans-serif;
-  background: #f1f4fb;
+  font-family: "Segoe UI", sans-serif;
+  background: #eef3fa;
   margin: 0;
-  padding: 0;
 }
 header {
   background: #002d62;
   color: white;
-  padding: 10px;
   text-align: center;
-  font-size: 22px;
-  font-weight: bold;
+  padding: 15px;
+  font-size: 20px;
+  font-weight: 600;
 }
 .container {
   background: white;
   max-width: 900px;
-  margin: 20px auto;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  margin: 25px auto;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
-h3 { margin: 10px 0; }
 .price {
+  font-size: 45px;
   color: orange;
-  font-size: 36px;
+  margin: 15px 0;
   font-weight: bold;
 }
 .player-search-wrapper {
@@ -39,62 +38,99 @@ h3 { margin: 10px 0; }
   width: 300px;
   margin: 20px auto;
 }
-#searchPlayer {
+.player-search-wrapper input {
   width: 100%;
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #ccc;
 }
 .suggestions {
-  display: none;
   position: absolute;
-  background: #fff;
+  top: 45px;
+  left: 0;
   width: 100%;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
   max-height: 250px;
   overflow-y: auto;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  z-index: 999;
+  display: none;
 }
 .suggestions div {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
+  padding: 8px 10px;
   cursor: pointer;
+  font-size: 15px;
+  border-bottom: 1px solid #eee;
 }
 .suggestions div:hover {
   background: #007bff;
   color: white;
 }
-.debug-box {
+.owner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
   margin-top: 20px;
-  background: #f9f9f9;
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: left;
-  max-height: 200px;
-  overflow-y: auto;
 }
+.owner {
+  background: #ff9800;
+  color: white;
+  border-radius: 8px;
+  padding: 10px;
+}
+.btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  margin: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.btn-blue { background: #007bff; color: white; }
+.btn-green { background: green; color: white; }
+.btn-gray { background: #555; color: white; }
+.btn-blue:hover { background: #005ec4; }
 </style>
 </head>
 <body>
-<header>🏏 OPL 2025 — Auction Debug Page</header>
+<header>🏏 OPL 2025 — Admin Auction Console</header>
 
 <div class="container">
   <h3 id="playerName">No Player Selected</h3>
   <div id="playerType">---</div>
   <div class="price" id="currentBid">₹0</div>
+  <div id="topBidder">Top Bidder: ---</div>
 
   <div class="player-search-wrapper">
-    <input type="text" id="searchPlayer" placeholder="Search player..." oninput="showSuggestions(this.value)">
+    <input type="text" id="searchPlayer" placeholder="Search Player Name..." oninput="showSuggestions(this.value)">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
-  <div class="debug-box" id="debugBox">Loading players...</div>
+  <div>
+    <button class="btn btn-blue" onclick="increaseBid(20000)">+ ₹20K</button>
+    <button class="btn btn-blue" onclick="increaseBid(50000)">+ ₹50K</button>
+    <input type="number" id="customAmount" placeholder="Custom ₹" style="padding:8px; border-radius:8px; width:100px;">
+    <button class="btn btn-blue" onclick="addCustom()">Add</button>
+  </div>
+
+  <h3>Owners</h3>
+  <div id="owners" class="owner-grid"></div>
+
+  <div style="margin-top:15px">
+    <button class="btn btn-green" onclick="markSold()">✅ Mark Sold</button>
+    <button class="btn btn-gray" onclick="resetBid()">⟳ Reset</button>
+  </div>
 </div>
+
+<footer style="background:#002d62; color:white; text-align:center; padding:10px;">
+  © 2025 Olive Crypto Systems Pvt. Ltd.
+</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDw6bKSkntytlnKFGCW5OTwiv44vE5sIxY",
@@ -108,56 +144,128 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-let players = [];
 
-const debug = (msg) => {
-  console.log(msg);
-  document.getElementById("debugBox").innerHTML += `<div>🟩 ${msg}</div>`;
+let players = [];
+let currentPlayer = null;
+let currentBid = 0;
+let topBidder = "---";
+
+// ✅ Load Players
+get(ref(db, "/players")).then((snapshot) => {
+  if (snapshot.exists()) {
+    const data = snapshot.val();
+    players = Object.values(data);
+    console.log("✅ Loaded players:", players.length);
+  } else {
+    alert("⚠️ No player data found!");
+  }
+});
+
+let owners = {
+  Sharath: 64.5,
+  "Sarath Chava": 77,
+  Teja: 75,
+  Vamsi: 69.5,
+  Rajan: 62,
+  Shabeer: 70,
+  Raviraj: 72,
+  Mahinder: 66,
 };
 
-// ✅ Load all players
-get(ref(db, "/players"))
-  .then(snapshot => {
-    if (!snapshot.exists()) {
-      debug("⚠️ No data found at /players");
-      return;
-    }
-    const data = snapshot.val();
-    players = Object.values(data).map(p => ({
-      name: p["Employee Name"] || p["EmployeeName"] || p["Player Name"] || p["Player"] || "Unnamed",
-      type: p["Category"] || p["Type"] || "",
-      response: p["Response"] || "",
-      location: p["Location"] || ""
-    }));
-    debug(`✅ Loaded ${players.length} players`);
-    players.slice(0, 10).forEach(p => debug(`Player: ${p.name} (${p.type})`));
-  })
-  .catch(err => debug("❌ Firebase Error: " + err.message));
+function renderOwners() {
+  const c = document.getElementById("owners");
+  c.innerHTML = "";
+  Object.entries(owners).forEach(([name, bal]) => {
+    const div = document.createElement("div");
+    div.className = "owner";
+    div.innerHTML = `<b>${name}</b><br>₹${bal.toFixed(2)} Cr`;
+    div.onclick = () => (topBidder = name);
+    c.appendChild(div);
+  });
+}
+renderOwners();
 
+// ✅ Search Dropdown
 function showSuggestions(value) {
   const suggestionBox = document.getElementById("suggestions");
   suggestionBox.innerHTML = "";
   const search = value.trim().toLowerCase();
+  if (!search) return (suggestionBox.style.display = "none");
 
-  if (!search) return suggestionBox.style.display = "none";
+  const matches = players.filter(p =>
+    p.name && p.name.toLowerCase().includes(search)
+  ).slice(0, 30);
 
-  const matches = players.filter(p => p.name.toLowerCase().includes(search)).slice(0, 30);
+  if (matches.length === 0) {
+    suggestionBox.innerHTML = "<div>No players found</div>";
+    suggestionBox.style.display = "block";
+    return;
+  }
+
   matches.forEach(p => {
     const div = document.createElement("div");
     div.textContent = `${p.name} (${p.type})`;
-    div.onclick = () => selectPlayer(p);
+    div.onclick = () => {
+      document.getElementById("searchPlayer").value = p.name;
+      suggestionBox.style.display = "none";
+      selectPlayer(p);
+    };
     suggestionBox.appendChild(div);
   });
-
-  suggestionBox.style.display = matches.length ? "block" : "none";
+  suggestionBox.style.display = "block";
 }
 
 function selectPlayer(p) {
+  currentPlayer = p;
+  currentBid = p.type === "A" ? 20000000 : 5000000;
   document.getElementById("playerName").textContent = p.name;
-  const base = p.type === "A" ? 20000000 : 5000000;
-  document.getElementById("playerType").textContent = `Type: ${p.type} | Base Price: ₹${base.toLocaleString()}`;
-  document.getElementById("currentBid").textContent = `₹${base.toLocaleString()}`;
-  document.getElementById("suggestions").style.display = "none";
+  document.getElementById("playerType").textContent =
+    `Type: ${p.type} | ${p.basePrice} | ${p.location}`;
+  document.getElementById("currentBid").textContent = `₹${currentBid.toLocaleString()}`;
+  document.getElementById("topBidder").textContent = "Top Bidder: ---";
+}
+
+function increaseBid(amount) {
+  if (!currentPlayer) return alert("Select a player first!");
+  currentBid += amount;
+  document.getElementById("currentBid").textContent = `₹${currentBid.toLocaleString()}`;
+}
+
+function addCustom() {
+  const val = parseInt(document.getElementById("customAmount").value);
+  if (val > 0) increaseBid(val);
+}
+
+function resetBid() {
+  currentPlayer = null;
+  currentBid = 0;
+  topBidder = "---";
+  document.getElementById("playerName").textContent = "No Player Selected";
+  document.getElementById("playerType").textContent = "---";
+  document.getElementById("currentBid").textContent = "₹0";
+  document.getElementById("topBidder").textContent = "Top Bidder: ---";
+}
+
+function markSold() {
+  if (!currentPlayer || topBidder === "---")
+    return alert("Select player and bidder first!");
+
+  const ownerBal = owners[topBidder];
+  const deduction = currentBid / 10000000;
+  if (ownerBal < deduction) return alert("Not enough balance!");
+
+  owners[topBidder] = ownerBal - deduction;
+  renderOwners();
+
+  set(ref(db, `sold/${currentPlayer.name}`), {
+    ...currentPlayer,
+    soldPrice: currentBid,
+    owner: topBidder,
+    timestamp: new Date().toISOString(),
+  });
+
+  alert(`${currentPlayer.name} sold to ${topBidder} for ₹${currentBid.toLocaleString()}`);
+  resetBid();
 }
 </script>
 </body>
