@@ -196,4 +196,64 @@ function searchPlayer(){
   if(player){
     selectedPlayer=player;
     document.getElementById("playerName").innerText=player.name;
-    document.getElementById("playerType").innerText=`Type: ${pla
+    document.getElementById("playerType").innerText=`Type: ${player.type}`;
+    currentBid=player.type==="A"?20000000:5000000;
+    document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
+  }else alert("Player not found!");
+}
+
+function increaseBid(amount){
+  if(!selectedPlayer){alert("Select player first!");return;}
+  currentBid+=amount;
+  document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
+}
+
+function validateNumber(input){input.value=input.value.replace(/[^0-9]/g,'');}
+function addCustom(){
+  const custom=parseInt(document.getElementById("customBid").value||"0");
+  if(custom>0 && selectedPlayer){
+    currentBid+=custom;
+    document.getElementById("currentBid").innerText=`₹${currentBid.toLocaleString()}`;
+    document.getElementById("customBid").value="";
+  }
+}
+
+function selectOwner(name){
+  currentOwner=name;
+  document.getElementById("topBidder").innerText=name;
+}
+
+function markSold(){
+  if(!selectedPlayer || !currentOwner){alert("Select player & owner first!");return;}
+  if(owners[currentOwner]<currentBid){alert("Insufficient balance!");return;}
+
+  owners[currentOwner]-=currentBid;
+  updateOwnersDisplay();
+
+  const soldData={
+    name:selectedPlayer.name,
+    type:selectedPlayer.type,
+    soldPrice:currentBid,
+    owner:currentOwner,
+    timestamp:Date.now()
+  };
+
+  const auctionRef=ref(db,"auction/current");
+  set(auctionRef,{currentPlayer:soldData,owners:owners}).then(()=>{
+    alert(`${selectedPlayer.name} sold to ${currentOwner} for ₹${currentBid.toLocaleString()}`);
+    resetBid();
+  });
+}
+
+function resetBid(){
+  selectedPlayer=null;
+  currentOwner=null;
+  currentBid=0;
+  document.getElementById("playerName").innerText="No Player Selected";
+  document.getElementById("playerType").innerText="---";
+  document.getElementById("currentBid").innerText="₹0";
+  document.getElementById("topBidder").innerText="---";
+}
+</script>
+</body>
+</html>
